@@ -202,6 +202,13 @@ def step1_docker():
 
 def step2_build():
     step(2, TOTAL_STEPS, "Construir y levantar contenedores (docker compose up --build)")
+    env_path = os.path.join(HERE, ".env")
+    env_example = os.path.join(HERE, ".env.example")
+    if not os.path.exists(env_path) and os.path.exists(env_example):
+        info("Archivo .env no encontrado. Creando a partir de .env.example...")
+        shutil.copy(env_example, env_path)
+        ok("Archivo .env creado automáticamente.")
+
     info("Esto puede tardar varios minutos la primera vez…\n")
 
     if containers_running():
