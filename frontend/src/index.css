@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #0a0f1a;
+    color: #e2e8f0;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f1829;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e3050;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #00d4aa40;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-bg-card/80 backdrop-blur-sm border border-bg-border rounded-card shadow-card;
+  }
+
+  .btn-primary {
+    @apply bg-accent-teal text-bg-primary font-semibold px-4 py-2 rounded-sm 
+    hover:bg-accent-teal-dim transition-all duration-200 
+    active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-bg-card border border-bg-border text-text-primary font-medium px-4 py-2 
+    rounded-sm hover:border-accent-teal/50 hover:text-accent-teal transition-all duration-200
+    active:scale-95;
+  }
+
+  .btn-danger {
+    @apply bg-alert-red/10 border border-alert-red/30 text-alert-red font-medium px-4 py-2 
+    rounded-sm hover:bg-alert-red/20 transition-all duration-200;
+  }
+
+  .input-field {
+    @apply w-full bg-bg-secondary border border-bg-border rounded-sm px-3 py-2
+    text-text-primary placeholder-text-muted font-mono text-sm
+    focus:outline-none focus:border-accent-teal/60 focus:ring-1 focus:ring-accent-teal/30
+    transition-all duration-200;
+  }
+
+  .label {
+    @apply block text-text-secondary text-sm font-medium mb-1;
+  }
+
+  .badge-blood {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold
+    bg-alert-red/20 text-alert-red border border-alert-red/30;
+  }
+
+  .badge-teal {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+    bg-accent-teal/20 text-accent-teal border border-accent-teal/30;
+  }
+
+  .badge-blue {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+    bg-accent-blue/20 text-accent-blue border border-accent-blue/30;
+  }
+
+  .badge-red {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
+    bg-alert-red/20 text-alert-red border border-alert-red/30 animate-pulse;
+  }
+
+  .badge-amber {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+    bg-alert-amber/20 text-alert-amber border border-alert-amber/30;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-sm text-text-secondary 
+    font-medium transition-all duration-200 cursor-pointer
+    hover:bg-accent-teal/10 hover:text-accent-teal;
+  }
+
+  .sidebar-item.active {
+    @apply bg-accent-teal/15 text-accent-teal border-r-2 border-accent-teal;
+  }
+
+  .stat-card {
+    @apply glass-card p-4 hover:border-accent-teal/30 transition-all duration-300
+    hover:shadow-teal cursor-default;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-accent-teal to-accent-blue bg-clip-text text-transparent;
+  }
+
+  .glow-teal {
+    @apply shadow-teal;
+  }
+
+  .fade-up-1 { animation: fadeUp 0.5s ease-out 0.1s both; }
+  .fade-up-2 { animation: fadeUp 0.5s ease-out 0.2s both; }
+  .fade-up-3 { animation: fadeUp 0.5s ease-out 0.3s both; }
+  .fade-up-4 { animation: fadeUp 0.5s ease-out 0.4s both; }
+  .fade-up-5 { animation: fadeUp 0.5s ease-out 0.5s both; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
