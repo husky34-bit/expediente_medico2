@@ -1,27 +1,30 @@
-version: '3.9'
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:15
+    env_file: 
+      - .env
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-securepassword123}
+      POSTGRES_DB: ${DB_NAME:-expediente_universal}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-expediente_universal}"]
       interval: 10s
       retries: 5
 
   backend:
     build: ./backend
-    command: sh -c "pip install --no-cache-dir -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    env_file: 
+      - .env
+    command: sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      SECRET_KEY: ${SECRET_KEY}
-      FRONTEND_URL: ${FRONTEND_URL}
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-securepassword123}@db:5432/${DB_NAME:-expediente_universal}
+      SECRET_KEY: ${SECRET_KEY:-supersecretkey_change_in_production_min32chars_xyz}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "8000:8000"
     depends_on:
@@ -32,8 +35,11 @@ services:
 
   frontend:
     build: ./frontend
+    env_file: 
+      - .env
+    command: npm run dev -- --host 0.0.0.0 --port 3000
     environment:
-      VITE_API_URL: ${VITE_API_URL}
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     ports:
       - "3000:3000"
     depends_on:

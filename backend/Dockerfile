@@ -13,5 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 EXPOSE 8000
-# Install dependencies on startup and run server
-CMD sh -c "pip install --no-cache-dir -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+# Run server
+CMD uvicorn app.main:app --host 0.0.0.0 --port 8000
