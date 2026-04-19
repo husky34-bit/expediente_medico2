@@ -1,17 +1,21 @@
-from app.models.user import User, UserRole
-from app.models.patient import Patient, BloodType, Gender
-from app.models.consultation import Consultation
-from app.models.medication import Medication
-from app.models.lab_result import LabResult
-from app.models.allergy import Allergy, AllergySeverity
-from app.models.access_log import AccessLog, AccessType
+from app.models.role import Role
+from app.models.usuario import Usuario
+from app.models.centro_medico import CentroMedico
+from app.models.personal_salud import PersonalSalud
+from app.models.paciente import Paciente
+from app.models.consulta import Consulta
+from app.models.log_acceso import LogAcceso
+from app.models.medicamento import Medicamento
+from app.models.resultado_laboratorio import ResultadoLaboratorio
 
 __all__ = [
-    "User", "UserRole",
-    "Patient", "BloodType", "Gender",
-    "Consultation",
-    "Medication",
-    "LabResult",
-    "Allergy", "AllergySeverity",
-    "AccessLog", "AccessType",
+    "Role",
+    "Usuario",
+    "CentroMedico",
+    "PersonalSalud",
+    "Paciente",
+    "Consulta",
+    "LogAcceso",
+    "Medicamento",
+    "ResultadoLaboratorio",
 ]

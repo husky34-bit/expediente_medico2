@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, UserPlus, Loader2 } from 'lucide-react'
 import apiClient from '../api/client'
@@ -7,31 +7,33 @@ const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
 
 export default function NewPatient() {
   const navigate = useNavigate()
+  const formEl = useRef(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({
-    full_name: '',
-    date_of_birth: '',
-    gender: 'female',
-    blood_type: '',
-    national_id: '',
-    phone: '',
-    address: '',
-    emergency_contact_name: '',
-    emergency_contact_phone: '',
-  })
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const getFormData = () => {
+    const form = formEl.current
+    return {
+      nombre_completo: form.nombre_completo?.value || '',
+      fecha_nacimiento: form.fecha_nacimiento?.value || '',
+      genero_biologico: form.genero_biologico?.value || '',
+      tipo_sangre: form.tipo_sangre?.value || '',
+      dni_pasaporte: form.dni_pasaporte?.value || '',
+      alergias: form.alergias?.value || '',
+      contacto_emergencia_nombre: form.contacto_emergencia_nombre?.value || '',
+      contacto_emergencia_tel: form.contacto_emergencia_tel?.value || '',
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      const payload = { ...form }
-      if (!payload.blood_type) delete payload.blood_type
-      if (!payload.national_id) delete payload.national_id
-      const res = await apiClient.post('/api/patients', payload)
+      const payload = getFormData()
+      if (!payload.tipo_sangre) delete payload.tipo_sangre
+      if (!payload.dni_pasaporte) delete payload.dni_pasaporte
+      const res = await apiClient.post('/api/pacientes', payload)
       navigate(`/patients/${res.data.id}`)
     } catch (err) {
       setError(err.response?.data?.detail || 'Error al crear el paciente')
@@ -64,14 +66,13 @@ export default function NewPatient() {
         <p className="text-text-secondary text-sm">Complete los datos básicos del paciente</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form ref={formEl} onSubmit={handleSubmit} className="space-y-5">
         {error && (
           <div className="p-3 rounded-sm bg-alert-red/10 border border-alert-red/30 text-alert-red text-sm">
             ⚠ {error}
           </div>
         )}
 
-        {/* Personal data */}
         <div className="glass-card p-6 fade-up-2">
           <h2 className="text-text-secondary text-xs uppercase tracking-wider mb-4">Datos Personales</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -79,11 +80,11 @@ export default function NewPatient() {
               <Field label="Nombre completo *">
                 <input
                   type="text"
-                  value={form.full_name}
-                  onChange={e => set('full_name', e.target.value)}
+                  name="nombre_completo"
                   className="input-field"
                   placeholder="Ana Sofía Reyes Vargas"
                   required
+                  autoComplete="off"
                 />
               </Field>
             </div>
@@ -91,93 +92,81 @@ export default function NewPatient() {
             <Field label="Fecha de nacimiento *">
               <input
                 type="date"
-                value={form.date_of_birth}
-                onChange={e => set('date_of_birth', e.target.value)}
+                name="fecha_nacimiento"
                 className="input-field"
                 required
               />
             </Field>
 
-            <Field label="Género *">
+            <Field label="Género biológico *">
               <select
-                value={form.gender}
-                onChange={e => set('gender', e.target.value)}
+                name="genero_biologico"
                 className="input-field"
                 required
+                defaultValue="Femenino"
               >
-                <option value="female">Femenino</option>
-                <option value="male">Masculino</option>
-                <option value="other">Otro</option>
+                <option value="Femenino">Femenino</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Otro">Otro</option>
               </select>
             </Field>
 
-            <Field label="Tipo de sangre">
+            <Field label="Tipo de Sangre">
               <select
-                value={form.blood_type}
-                onChange={e => set('blood_type', e.target.value)}
+                name="tipo_sangre"
                 className="input-field"
+                defaultValue=""
               >
-                <option value="">-- Seleccionar --</option>
+                <option value="">Desconocido</option>
                 {BLOOD_TYPES.map(bt => <option key={bt} value={bt}>{bt}</option>)}
               </select>
             </Field>
 
-            <Field label="Cédula de identidad">
+            <Field label="Cédula de Identidad / Pasaporte *">
               <input
                 type="text"
-                value={form.national_id}
-                onChange={e => set('national_id', e.target.value)}
+                name="dni_pasaporte"
                 className="input-field"
-                placeholder="12345678"
+                placeholder="7654321"
+                required
+                autoComplete="off"
               />
             </Field>
-
-            <Field label="Teléfono">
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={e => set('phone', e.target.value)}
-                className="input-field"
-                placeholder="+591 7xxxxxxx"
-              />
-            </Field>
-
-            <div className="sm:col-span-2">
-              <Field label="Dirección">
-                <input
-                  type="text"
-                  value={form.address}
-                  onChange={e => set('address', e.target.value)}
-                  className="input-field"
-                  placeholder="Av. Ejemplo 123, Cochabamba"
-                />
-              </Field>
-            </div>
           </div>
         </div>
 
-        {/* Emergency contact */}
         <div className="glass-card p-6 fade-up-3">
           <h2 className="text-text-secondary text-xs uppercase tracking-wider mb-4">Contacto de Emergencia</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Nombre">
+            <Field label="Nombre del contacto">
               <input
                 type="text"
-                value={form.emergency_contact_name}
-                onChange={e => set('emergency_contact_name', e.target.value)}
+                name="contacto_emergencia_nombre"
                 className="input-field"
-                placeholder="Nombre del familiar"
+                placeholder="Nombre completo"
+                autoComplete="off"
               />
             </Field>
-            <Field label="Teléfono">
+
+            <Field label="Teléfono de emergencia">
               <input
                 type="tel"
-                value={form.emergency_contact_phone}
-                onChange={e => set('emergency_contact_phone', e.target.value)}
+                name="contacto_emergencia_tel"
                 className="input-field"
-                placeholder="+591 7xxxxxxx"
+                placeholder="+591 70000000"
+                autoComplete="off"
               />
             </Field>
+            
+            <div className="sm:col-span-2">
+              <Field label="Alergias">
+                <textarea
+                  name="alergias"
+                  className="input-field min-h-[80px]"
+                  placeholder="Ej: Penicilina, Nueces, etc."
+                />
+              </Field>
+            </div>
           </div>
         </div>
 

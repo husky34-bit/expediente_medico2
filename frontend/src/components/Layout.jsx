@@ -19,8 +19,9 @@ export default function Layout() {
     navigate('/login')
   }
 
-  const initials = user?.full_name
-    ?.split(' ')
+  const initials = user?.email
+    ?.split('@')[0]
+    ?.split('.')
     .slice(0, 2)
     .map(n => n[0])
     .join('')
@@ -74,8 +75,8 @@ export default function Layout() {
               {initials}
             </div>
             <div className="min-w-0">
-              <p className="text-text-primary text-sm font-medium truncate">{user?.full_name}</p>
-              <p className="text-text-muted text-xs capitalize">{user?.role}</p>
+              <p className="text-text-primary text-sm font-medium truncate">{user?.email}</p>
+              <p className="text-text-muted text-xs capitalize">{user?.estado}</p>
             </div>
           </div>
           <button

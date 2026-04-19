@@ -27,10 +27,10 @@ export default function Dashboard() {
   const fetchPatients = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await apiClient.get('/api/patients', {
+      const res = await apiClient.get('/api/pacientes', {
         params: { search: search || undefined, page, limit: 12 },
       })
-      setPatients(res.data.patients)
+      setPatients(res.data.pacientes)
       setTotal(res.data.total)
     } catch (err) {
       console.error(err)
@@ -93,49 +93,47 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {patients.map((p, i) => {
-            const age = p.date_of_birth
-              ? differenceInYears(new Date(), parseISO(p.date_of_birth))
+            const age = p.fecha_nacimiento
+              ? differenceInYears(new Date(), parseISO(p.fecha_nacimiento))
               : null
-            const btColor = bloodTypeColor[p.blood_type] || 'bg-bg-card text-text-muted border-bg-border'
+            const btColor = bloodTypeColor[p.tipo_sangre] || 'bg-bg-card text-text-muted border-bg-border'
 
             return (
               <div
                 key={p.id}
                 onClick={() => navigate(`/patients/${p.id}`)}
-                className="glass-card p-5 cursor-pointer hover:border-accent-teal/40 hover:shadow-teal transition-all duration-300 group"
-                style={{ animationDelay: `${i * 0.05}s` }}
+                className={`card group hover:scale-[1.02] cursor-pointer transition-all duration-300 fade-up-${(i % 3) + 1}`}
               >
-                {/* Avatar + name */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-teal/20 to-accent-blue/20 border border-accent-teal/30 flex items-center justify-center text-lg font-bold text-accent-teal flex-shrink-0 group-hover:shadow-teal transition-all">
-                    {p.full_name?.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-accent-teal/10 flex items-center justify-center group-hover:bg-accent-teal group-hover:text-white transition-colors">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-text-primary group-hover:text-accent-teal transition-colors">
+                        {p.nombre_completo}
+                      </h3>
+                      <p className="text-xs text-text-muted">ID: {p.dni_pasaporte}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-text-primary font-semibold truncate group-hover:text-accent-teal transition-colors">
-                      {p.full_name}
-                    </p>
-                    <p className="text-text-muted text-xs font-mono">{p.national_id || 'Sin CI'}</p>
-                  </div>
-                </div>
-
-                {/* Info chips */}
-                <div className="flex flex-wrap gap-2">
-                  {p.blood_type && (
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-bold border ${btColor}`}>
-                      <Droplets className="w-3 h-3" />
-                      {p.blood_type}
+                  {p.tipo_sangre && (
+                    <span className={`px-2 py-1 rounded-lg border text-[10px] font-bold ${btColor}`}>
+                      {p.tipo_sangre}
                     </span>
                   )}
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-3">
                   {age !== null && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-bg-secondary border border-bg-border text-text-secondary">
                       <Calendar className="w-3 h-3" />
                       {age} años
                     </span>
                   )}
-                  {p.phone && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-bg-secondary border border-bg-border text-text-secondary font-mono">
-                      <Phone className="w-3 h-3" />
-                      {p.phone}
+                  {p.genero_biologico && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-bg-secondary border border-bg-border text-text-secondary">
+                      <User className="w-3 h-3" />
+                      {p.genero_biologico}
                     </span>
                   )}
                 </div>
@@ -143,7 +141,7 @@ export default function Dashboard() {
                 {/* QR indicator */}
                 <div className="mt-3 pt-3 border-t border-bg-border flex items-center justify-between">
                   <span className="text-xs text-text-muted">
-                    Registrado {p.created_at ? format(parseISO(p.created_at), "d MMM yyyy", { locale: es }) : ''}
+                    Registrado {p.creado_en ? format(parseISO(p.creado_en), "d MMM yyyy", { locale: es }) : ''}
                   </span>
                   <QrCode className="w-4 h-4 text-accent-teal/60 group-hover:text-accent-teal transition-colors" />
                 </div>

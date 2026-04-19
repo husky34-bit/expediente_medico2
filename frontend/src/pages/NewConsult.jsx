@@ -1,78 +1,95 @@
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Stethoscope, Plus, Trash2, Loader2 } from 'lucide-react'
+import { ArrowLeft, Stethoscope, Plus, Trash2, Loader2, ClipboardList, Pill } from 'lucide-react'
 import apiClient from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 export default function NewConsult() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [patient, setPatient] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const formEl = useRef(null)
+  const medsRef = useRef([])
 
   const today = new Date().toISOString().slice(0, 10)
 
-  const [consult, setConsult] = useState({
-    patient_id: id,
-    date: today,
-    institution: '',
-    chief_complaint: '',
-    diagnosis: '',
-    diagnosis_code: '',
-    notes: '',
-  })
-
-  const [medications, setMedications] = useState([])
-  const [allergies, setAllergies] = useState([])
-
   useEffect(() => {
-    apiClient.get(`/api/patients/${id}`)
-      .then(r => setPatient(r.data.patient))
+    apiClient.get(`/api/pacientes/${id}`)
+      .then(r => setPatient(r.data.paciente))
       .catch(console.error)
   }, [id])
 
-  const setC = (k, v) => setConsult(f => ({ ...f, [k]: v }))
+  const getFormData = () => {
+    const form = formEl.current
+    return {
+      paciente_id: id,
+      medico_id: user?.id || '',
+      centro_id: 1,
+      motivo_consulta: form.motivo_consulta?.value || '',
+      diagnostico_cie10: form.diagnostico_cie10?.value || '',
+      tratamiento: form.tratamiento?.value || '',
+      notas_privadas: form.notas_privadas?.value || '',
+    }
+  }
 
-  const addMed = () => setMedications(m => [...m, {
-    patient_id: id,
-    name: '', dose: '', frequency: '',
-    start_date: today, end_date: '',
-    is_active: true, notes: '',
-  }])
+  const getMedications = () => {
+    return medsRef.current.filter(med => med.nombre?.value?.trim())
+      .map(med => ({
+        paciente_id: id,
+        prescrito_por: user?.id,
+        nombre_medicamento: med.nombre?.value || '',
+        dosis: med.dosis?.value || '',
+        frecuencia: med.frecuencia?.value || '',
+        fecha_inicio: today,
+        esta_activo: true,
+      }))
+  }
 
-  const updateMed = (i, k, v) => setMedications(m => m.map((med, idx) => idx === i ? { ...med, [k]: v } : med))
-  const removeMed = (i) => setMedications(m => m.filter((_, idx) => idx !== i))
-
-  const addAllergy = () => setAllergies(a => [...a, {
-    patient_id: id,
-    allergen: '', reaction_type: '',
-    severity: 'mild', confirmed_date: today, notes: '',
-  }])
-
-  const updateAllergy = (i, k, v) => setAllergies(a => a.map((al, idx) => idx === i ? { ...al, [k]: v } : al))
-  const removeAllergy = (i) => setAllergies(a => a.filter((_, idx) => idx !== i))
+  const addMed = () => {
+    const container = document.getElementById('medications-container')
+    const div = document.createElement('div')
+    div.className = 'p-4 rounded-xl bg-bg-secondary border border-bg-border relative group'
+    div.innerHTML = `
+      <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 p-1.5 text-text-muted hover:text-alert-red transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+      </button>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="sm:col-span-1">
+          <label class="text-[10px] font-bold text-text-muted uppercase mb-1 block">Medicamento</label>
+          <input type="text" name="nombre_medicamento" class="input-field py-1.5 text-sm" placeholder="Ej: Amoxicilina" />
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-text-muted uppercase mb-1 block">Dosis</label>
+          <input type="text" name="dosis" class="input-field py-1.5 text-sm" placeholder="Ej: 500mg" />
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-text-muted uppercase mb-1 block">Frecuencia</label>
+          <input type="text" name="frecuencia" class="input-field py-1.5 text-sm" placeholder="Ej: Cada 8h" />
+        </div>
+      </div>
+    `
+    container.appendChild(div)
+    const inputs = div.querySelectorAll('input')
+    medsRef.current.push({
+      nombre: inputs[0],
+      dosis: inputs[1],
+      frecuencia: inputs[2],
+    })
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await apiClient.post('/api/consultations', consult)
+      await apiClient.post('/api/consultas', getFormData())
 
+      const medications = getMedications()
       for (const med of medications) {
-        if (med.name) {
-          const payload = { ...med }
-          if (!payload.end_date) delete payload.end_date
-          await apiClient.post('/api/medications', payload)
-        }
-      }
-
-      for (const al of allergies) {
-        if (al.allergen) {
-          const payload = { ...al }
-          if (!payload.confirmed_date) delete payload.confirmed_date
-          await apiClient.post('/api/allergies', payload)
-        }
+        await apiClient.post('/api/medicamentos', med)
       }
 
       navigate(`/patients/${id}`)
@@ -82,6 +99,13 @@ export default function NewConsult() {
       setLoading(false)
     }
   }
+
+  const Field = ({ label, children }) => (
+    <div>
+      <label className="block text-xs font-bold text-text-muted uppercase mb-1.5">{label}</label>
+      {children}
+    </div>
+  )
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -98,149 +122,80 @@ export default function NewConsult() {
             <Stethoscope className="w-6 h-6 text-accent-teal" />
             Nueva Consulta
           </h1>
-          <p className="text-text-secondary text-sm">Paciente: <span className="text-accent-teal">{patient.full_name}</span></p>
+          <p className="text-text-secondary text-sm">Paciente: <span className="text-accent-teal font-medium">{patient.nombre_completo}</span></p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form ref={formEl} onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="p-3 rounded-sm bg-alert-red/10 border border-alert-red/30 text-alert-red text-sm">⚠ {error}</div>
+          <div className="p-3 rounded-lg bg-alert-red/10 border border-alert-red/30 text-alert-red text-sm">⚠ {error}</div>
         )}
 
-        {/* Consultation data */}
         <div className="glass-card p-6 fade-up-2">
-          <h2 className="text-text-secondary text-xs uppercase tracking-wider mb-4">Datos de la Consulta</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="label">Fecha *</label>
-              <input type="date" value={consult.date} onChange={e => setC('date', e.target.value)} className="input-field" required />
-            </div>
-            <div>
-              <label className="label">Institución</label>
-              <input type="text" value={consult.institution} onChange={e => setC('institution', e.target.value)} className="input-field" placeholder="Hospital / Clínica" />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="label">Motivo de consulta *</label>
-              <input type="text" value={consult.chief_complaint} onChange={e => setC('chief_complaint', e.target.value)} className="input-field" placeholder="Ej: Dolor de cabeza intenso" required />
-            </div>
-            <div>
-              <label className="label">Diagnóstico *</label>
-              <input type="text" value={consult.diagnosis} onChange={e => setC('diagnosis', e.target.value)} className="input-field" placeholder="Diagnóstico principal" required />
-            </div>
-            <div>
-              <label className="label">Código CIE-10</label>
-              <input type="text" value={consult.diagnosis_code} onChange={e => setC('diagnosis_code', e.target.value)} className="input-field font-mono" placeholder="Ej: J06.9" />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="label">Notas clínicas</label>
-              <textarea
-                value={consult.notes}
-                onChange={e => setC('notes', e.target.value)}
-                className="input-field resize-none"
-                rows={3}
-                placeholder="Observaciones, evolución, indicaciones..."
+          <h2 className="text-text-secondary text-xs uppercase tracking-wider mb-4 flex items-center gap-2">
+            <ClipboardList className="w-4 h-4" /> Datos de la Consulta
+          </h2>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <Field label="Motivo de Consulta *">
+              <input
+                type="text"
+                name="motivo_consulta"
+                className="input-field"
+                placeholder="Ej: Dolor abdominal, Control rutinario"
+                required
+                autoComplete="off"
               />
-            </div>
+            </Field>
+            <Field label="Diagnóstico (CIE-10) *">
+              <input
+                type="text"
+                name="diagnostico_cie10"
+                className="input-field"
+                placeholder="Ej: K29.5, Z00.0"
+                required
+                autoComplete="off"
+              />
+            </Field>
+          </div>
+
+          <div className="space-y-4">
+            <Field label="Tratamiento / Plan">
+              <textarea
+                name="tratamiento"
+                className="input-field min-h-[100px] resize-none"
+                placeholder="Prescripciones, recomendaciones, etc."
+              />
+            </Field>
+            <Field label="Notas Privadas">
+              <textarea
+                name="notas_privadas"
+                className="input-field min-h-[80px] resize-none"
+                placeholder="Observaciones adicionales (no visibles en perfil público)"
+              />
+            </Field>
           </div>
         </div>
 
-        {/* Medications */}
         <div className="glass-card p-6 fade-up-3">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-text-secondary text-xs uppercase tracking-wider">Medicamentos Prescritos</h2>
-            <button type="button" onClick={addMed} className="btn-secondary text-xs py-1.5 flex items-center gap-1">
-              <Plus className="w-3 h-3" /> Agregar
+            <h2 className="text-text-secondary text-xs uppercase tracking-wider flex items-center gap-2">
+              <Pill className="w-4 h-4" /> Medicación Recetada
+            </h2>
+            <button
+              type="button"
+              onClick={addMed}
+              className="text-accent-teal hover:bg-accent-teal/10 px-2 py-1 rounded-md text-xs font-bold transition-all flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" /> AGREGAR
             </button>
           </div>
-          {medications.length === 0 ? (
-            <p className="text-text-muted text-sm text-center py-4">No se agregaron medicamentos</p>
-          ) : (
-            <div className="space-y-4">
-              {medications.map((med, i) => (
-                <div key={i} className="p-4 rounded-sm bg-bg-secondary border border-bg-border relative">
-                  <button
-                    type="button"
-                    onClick={() => removeMed(i)}
-                    className="absolute top-3 right-3 text-text-muted hover:text-alert-red transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pr-6">
-                    <div className="sm:col-span-2">
-                      <label className="label text-xs">Nombre *</label>
-                      <input type="text" value={med.name} onChange={e => updateMed(i, 'name', e.target.value)} className="input-field text-sm" placeholder="Nombre del medicamento" />
-                    </div>
-                    <div>
-                      <label className="label text-xs">Dosis *</label>
-                      <input type="text" value={med.dose} onChange={e => updateMed(i, 'dose', e.target.value)} className="input-field text-sm" placeholder="500mg" />
-                    </div>
-                    <div>
-                      <label className="label text-xs">Frecuencia *</label>
-                      <input type="text" value={med.frequency} onChange={e => updateMed(i, 'frequency', e.target.value)} className="input-field text-sm" placeholder="Cada 8 horas" />
-                    </div>
-                    <div>
-                      <label className="label text-xs">Inicio</label>
-                      <input type="date" value={med.start_date} onChange={e => updateMed(i, 'start_date', e.target.value)} className="input-field text-sm" />
-                    </div>
-                    <div>
-                      <label className="label text-xs">Fin (opcional)</label>
-                      <input type="date" value={med.end_date} onChange={e => updateMed(i, 'end_date', e.target.value)} className="input-field text-sm" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Allergies */}
-        <div className="glass-card p-6 fade-up-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-text-secondary text-xs uppercase tracking-wider">Alergias Detectadas</h2>
-            <button type="button" onClick={addAllergy} className="btn-secondary text-xs py-1.5 flex items-center gap-1">
-              <Plus className="w-3 h-3" /> Agregar
-            </button>
+          <div id="medications-container">
+            <p className="text-text-muted text-xs italic text-center py-4 border border-dashed border-bg-border rounded-lg">
+              No se han agregado medicamentos a esta consulta
+            </p>
           </div>
-          {allergies.length === 0 ? (
-            <p className="text-text-muted text-sm text-center py-4">No se registraron alergias</p>
-          ) : (
-            <div className="space-y-4">
-              {allergies.map((al, i) => (
-                <div key={i} className="p-4 rounded-sm bg-bg-secondary border border-bg-border relative">
-                  <button
-                    type="button"
-                    onClick={() => removeAllergy(i)}
-                    className="absolute top-3 right-3 text-text-muted hover:text-alert-red transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <div className="grid grid-cols-2 gap-3 pr-6">
-                    <div>
-                      <label className="label text-xs">Alérgeno *</label>
-                      <input type="text" value={al.allergen} onChange={e => updateAllergy(i, 'allergen', e.target.value)} className="input-field text-sm" placeholder="Penicilina, mariscos..." />
-                    </div>
-                    <div>
-                      <label className="label text-xs">Severidad</label>
-                      <select value={al.severity} onChange={e => updateAllergy(i, 'severity', e.target.value)} className="input-field text-sm">
-                        <option value="mild">Leve</option>
-                        <option value="moderate">Moderada</option>
-                        <option value="severe">Severa</option>
-                        <option value="anaphylactic">Anafiláctica</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="label text-xs">Tipo de reacción</label>
-                      <input type="text" value={al.reaction_type} onChange={e => updateAllergy(i, 'reaction_type', e.target.value)} className="input-field text-sm" placeholder="Urticaria, angioedema..." />
-                    </div>
-                    <div>
-                      <label className="label text-xs">Fecha confirmación</label>
-                      <input type="date" value={al.confirmed_date} onChange={e => updateAllergy(i, 'confirmed_date', e.target.value)} className="input-field text-sm" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="flex gap-3 fade-up-5">

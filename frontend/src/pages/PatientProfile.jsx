@@ -21,7 +21,7 @@ export default function PatientProfile() {
 
   const fetchData = async () => {
     try {
-      const res = await apiClient.get(`/api/patients/${id}`)
+      const res = await apiClient.get(`/api/pacientes/${id}`)
       setData(res.data)
     } catch (err) {
       console.error(err)
@@ -34,7 +34,7 @@ export default function PatientProfile() {
 
   const handleRegenerateQR = async () => {
     try {
-      await apiClient.post(`/api/patients/${id}/qr-token`)
+      await apiClient.post(`/api/pacientes/${id}/qr-token`)
       fetchData()
     } catch (err) {
       console.error(err)
@@ -53,28 +53,30 @@ export default function PatientProfile() {
     </div>
   )
 
-  const { patient, consultations, medications, labs, allergies } = data
-  const age = patient.date_of_birth
-    ? differenceInYears(new Date(), parseISO(patient.date_of_birth))
+  const { patient, consultations, medications, laboratorios } = data
+  const patientData = patient || data.paciente || {}
+  const consultationsData = consultations || data.consultas || []
+  const medicationsData = medications || data.medicamentos || []
+  const laboratoriosData = laboratorios || data.laboratorios || []
+
+  const age = patientData?.fecha_nacimiento
+    ? differenceInYears(new Date(), parseISO(patientData.fecha_nacimiento))
     : null
-  const activeMeds = medications.filter(m => m.is_active)
-  const criticalAllergies = allergies.filter(a => a.severity === 'anaphylactic' || a.severity === 'severe')
+  const activeMeds = (medicationsData || []).filter(m => m.esta_activo)
 
   // Build unified timeline
   const timeline = [
-    ...consultations.map(c => ({ type: 'consultation', date: c.date, ...c })),
-    ...medications.map(m => ({ type: 'medication', date: m.start_date, ...m })),
-    ...labs.map(l => ({ type: 'lab', date: l.date, ...l })),
-    ...allergies.map(a => ({ type: 'allergy', date: a.confirmed_date || a.created_at?.slice(0, 10), ...a })),
+    ...(consultationsData || []).map(c => ({ type: 'consultation', date: c.fecha_consulta, ...c })),
+    ...(medicationsData || []).map(m => ({ type: 'medication', date: m.fecha_inicio, ...m })),
+    ...(laboratoriosData || []).map(l => ({ type: 'lab', date: l.fecha_prueba, ...l })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date))
 
-  const initials = patient.full_name?.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+  const initials = patientData?.nombre_completo?.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() || '??'
 
   const tabs = [
-    { id: 'timeline', label: 'Timeline', icon: Activity },
-    { id: 'allergies', label: `Alergias (${allergies.length})`, icon: AlertTriangle },
-    { id: 'medications', label: `Medicación (${medications.length})`, icon: Pill },
-    { id: 'labs', label: `Laboratorios (${labs.length})`, icon: FlaskConical },
+    { id: 'timeline', label: 'Historial', icon: Activity },
+    { id: 'medications', label: `Medicación (${(medicationsData || []).length})`, icon: Pill },
+    { id: 'labs', label: `Laboratorios (${(laboratoriosData || []).length})`, icon: FlaskConical },
   ]
 
   return (
@@ -97,11 +99,11 @@ export default function PatientProfile() {
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="font-display text-2xl text-text-primary mb-1">{patient.full_name}</h1>
+                <h1 className="font-display text-2xl text-text-primary mb-1">{patientData.nombre_completo}</h1>
                 <div className="flex flex-wrap gap-3 mb-3">
-                  {patient.blood_type && (
+                  {patientData.tipo_sangre && (
                     <span className="badge-blood flex items-center gap-1">
-                      <Droplets className="w-3 h-3" /> {patient.blood_type}
+                      <Droplets className="w-3 h-3" /> {patientData.tipo_sangre}
                     </span>
                   )}
                   {age !== null && (
@@ -110,21 +112,16 @@ export default function PatientProfile() {
                     </span>
                   )}
                   <span className="text-text-secondary text-sm flex items-center gap-1">
-                    <User className="w-3.5 h-3.5" /> {patient.gender === 'male' ? 'Masculino' : patient.gender === 'female' ? 'Femenino' : 'Otro'}
+                    <User className="w-3.5 h-3.5" /> {patientData.genero_biologico}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-4 text-sm text-text-secondary">
-                  {patient.national_id && (
-                    <span className="font-mono">CI: {patient.national_id}</span>
+                  {patientData.dni_pasaporte && (
+                    <span className="font-mono">CI: {patientData.dni_pasaporte}</span>
                   )}
-                  {patient.phone && (
+                  {patientData.contacto_emergencia_tel && (
                     <span className="flex items-center gap-1">
-                      <Phone className="w-3.5 h-3.5" /> {patient.phone}
-                    </span>
-                  )}
-                  {patient.address && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" /> {patient.address}
+                      <Phone className="w-3.5 h-3.5" /> {patientData.contacto_emergencia_tel}
                     </span>
                   )}
                 </div>
@@ -136,19 +133,6 @@ export default function PatientProfile() {
                 <Plus className="w-4 h-4" /> Nueva Consulta
               </button>
             </div>
-
-            {/* Critical allergy alert */}
-            {criticalAllergies.length > 0 && (
-              <div className="mt-4 p-3 rounded-sm bg-alert-red/10 border border-alert-red/40 flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-alert-red flex-shrink-0 animate-pulse" />
-                <div>
-                  <span className="text-alert-red font-semibold text-sm">⚠ ALERTA CRÍTICA: </span>
-                  <span className="text-alert-red text-sm">
-                    {criticalAllergies.map(a => a.allergen).join(', ')}
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Tabs */}
@@ -182,10 +166,9 @@ export default function PatientProfile() {
                           key={entry.id}
                           type="consultation"
                           date={entry.date}
-                          title={entry.diagnosis}
-                          subtitle={entry.chief_complaint}
-                          details={entry.notes}
-                          code={entry.diagnosis_code}
+                          title={entry.diagnostico_cie10}
+                          subtitle={entry.motivo_consulta}
+                          details={entry.tratamiento}
                         />
                       )
                       if (entry.type === 'medication') return (
@@ -193,9 +176,9 @@ export default function PatientProfile() {
                           key={entry.id}
                           type="medication"
                           date={entry.date}
-                          title={entry.name}
-                          subtitle={`${entry.dose} — ${entry.frequency}`}
-                          details={entry.notes}
+                          title={entry.nombre_medicamento}
+                          subtitle={`${entry.dosis} — ${entry.frecuencia}`}
+                          details={entry.notas}
                         />
                       )
                       if (entry.type === 'lab') return (
@@ -203,9 +186,9 @@ export default function PatientProfile() {
                           key={entry.id}
                           type="lab"
                           date={entry.date}
-                          title={entry.test_name}
-                          subtitle={`${entry.result_value} ${entry.unit || ''} (Ref: ${entry.reference_range || 'N/A'})`}
-                          details={entry.lab_name}
+                          title={entry.nombre_prueba}
+                          subtitle={`${entry.valor_resultado} ${entry.unidad || ''}`}
+                          details={entry.notas}
                         />
                       )
                       if (entry.type === 'allergy') return (
@@ -243,47 +226,46 @@ export default function PatientProfile() {
 
               {activeTab === 'medications' && (
                 <div className="space-y-3">
-                  {medications.length === 0
+                  {(medicationsData || []).length === 0
                     ? <p className="text-text-muted text-sm text-center py-8">Sin medicamentos registrados</p>
-                    : medications.map(m => (
-                        <div key={m.id} className="flex items-start gap-3 p-3 rounded-sm bg-bg-secondary border border-bg-border">
-                          <Pill className={`w-4 h-4 mt-0.5 flex-shrink-0 ${m.is_active ? 'text-accent-teal' : 'text-text-muted'}`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-text-primary text-sm font-semibold">{m.name}</p>
-                              <span className={m.is_active ? 'badge-teal' : 'text-text-muted text-xs border border-bg-border px-1.5 py-0.5 rounded'}>
-                                {m.is_active ? 'Activo' : 'Discontinuado'}
-                              </span>
-                            </div>
-                            <p className="text-text-secondary text-xs mt-0.5">{m.dose} — {m.frequency}</p>
-                            {m.notes && <p className="text-text-muted text-xs mt-1 italic">{m.notes}</p>}
-                          </div>
-                          <span className="text-text-muted text-xs font-mono whitespace-nowrap">{m.start_date}</span>
+                    : medicationsData.map(m => (
+                    <div key={m.id} className="p-4 rounded-xl border border-bg-border bg-bg-secondary flex items-start justify-between">
+                      <div className="flex gap-3">
+                        <div className={`p-2 rounded-lg ${m.esta_activo ? 'bg-accent-teal/10 text-accent-teal' : 'bg-text-muted/10 text-text-muted'}`}>
+                          <Pill className="w-5 h-5" />
                         </div>
-                      ))
-                  }
+                        <div>
+                          <h4 className="font-semibold text-text-primary">{m.nombre_medicamento}</h4>
+                          <p className="text-sm text-text-secondary">{m.dosis} — {m.frecuencia}</p>
+                          <p className="text-xs text-text-muted mt-1">Inicio: {m.fecha_inicio ? format(parseISO(m.fecha_inicio), 'PP', { locale: es }) : 'N/A'}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${m.esta_activo ? 'bg-accent-teal/10 text-accent-teal border border-accent-teal/20' : 'bg-text-muted/10 text-text-muted border border-text-muted/20'}`}>
+                        {m.esta_activo ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
 
               {activeTab === 'labs' && (
                 <div className="space-y-3">
-                  {labs.length === 0
+                  {(laboratoriosData || []).length === 0
                     ? <p className="text-text-muted text-sm text-center py-8">Sin resultados de laboratorio</p>
-                    : labs.map(l => (
-                        <div key={l.id} className="flex items-start gap-3 p-3 rounded-sm bg-bg-secondary border border-bg-border">
-                          <FlaskConical className="w-4 h-4 mt-0.5 text-alert-amber flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-text-primary text-sm font-semibold">{l.test_name}</p>
-                            <p className="text-text-secondary text-xs mt-0.5">
-                              <span className="font-mono font-bold text-accent-teal">{l.result_value} {l.unit}</span>
-                              {l.reference_range && <span className="text-text-muted"> (Ref: {l.reference_range})</span>}
-                            </p>
-                            {l.lab_name && <p className="text-text-muted text-xs mt-0.5">{l.lab_name}</p>}
-                          </div>
-                          <span className="text-text-muted text-xs font-mono whitespace-nowrap">{l.date}</span>
+                    : laboratoriosData.map(l => (
+                    <div key={l.id} className="p-4 rounded-xl border border-bg-border bg-bg-secondary flex items-start justify-between">
+                      <div className="flex gap-3">
+                        <div className="p-2 rounded-lg bg-accent-blue/10 text-accent-blue">
+                          <FlaskConical className="w-5 h-5" />
                         </div>
-                      ))
-                  }
+                        <div>
+                          <h4 className="font-semibold text-text-primary">{l.nombre_prueba}</h4>
+                          <p className="text-sm text-text-secondary">Resultado: <span className="font-bold text-accent-blue">{l.valor_resultado} {l.unidad}</span></p>
+                          <p className="text-xs text-text-muted mt-1">Fecha: {l.fecha_prueba ? format(parseISO(l.fecha_prueba), 'PP', { locale: es }) : 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -295,22 +277,22 @@ export default function PatientProfile() {
           {/* QR */}
           <div className="fade-up-2">
             <QRDisplay
-              patientId={patient.id}
-              qrToken={patient.qr_token}
-              patientName={patient.full_name}
+              patientId={patientData.id}
+              qrToken={patientData.qr_token}
+              patientName={patientData.nombre_completo}
               onRegenerate={handleRegenerateQR}
             />
           </div>
 
           {/* Emergency contact */}
-          {patient.emergency_contact_name && (
+          {patientData.contacto_emergencia_nombre && (
             <div className="glass-card p-4 fade-up-3">
               <h3 className="text-text-secondary text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5" /> Contacto de Emergencia
               </h3>
-              <p className="text-text-primary font-semibold">{patient.emergency_contact_name}</p>
-              {patient.emergency_contact_phone && (
-                <p className="text-accent-teal font-mono text-sm mt-1">{patient.emergency_contact_phone}</p>
+              <p className="text-text-primary font-semibold">{patientData.contacto_emergencia_nombre}</p>
+              {patientData.contacto_emergencia_tel && (
+                <p className="text-accent-teal font-mono text-sm mt-1">{patientData.contacto_emergencia_tel}</p>
               )}
             </div>
           )}
@@ -322,12 +304,12 @@ export default function PatientProfile() {
             </h3>
             {activeMeds.length === 0
               ? <p className="text-text-muted text-sm">Sin medicación activa</p>
-              : activeMeds.slice(0, 5).map(m => (
+              : (activeMeds || []).slice(0, 5).map(m => (
                   <div key={m.id} className="flex items-center gap-2 py-1.5 border-b border-bg-border last:border-0">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent-teal flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-text-primary text-sm truncate">{m.name}</p>
-                      <p className="text-text-muted text-xs">{m.dose}</p>
+                      <p className="text-text-primary text-sm truncate">{m.nombre_medicamento}</p>
+                      <p className="text-text-muted text-xs">{m.dosis}</p>
                     </div>
                   </div>
                 ))
@@ -337,10 +319,10 @@ export default function PatientProfile() {
           {/* Stats */}
           <div className="grid grid-cols-2 gap-3 fade-up-4">
             {[
-              { label: 'Consultas', value: consultations.length, icon: Stethoscope, color: 'text-accent-teal' },
-              { label: 'Medicamentos', value: medications.length, icon: Pill, color: 'text-accent-blue' },
-              { label: 'Laboratorios', value: labs.length, icon: FlaskConical, color: 'text-alert-amber' },
-              { label: 'Alergias', value: allergies.length, icon: AlertTriangle, color: 'text-alert-red' },
+              { label: 'Consultas', value: consultationsData.length, icon: Stethoscope, color: 'text-accent-teal' },
+              { label: 'Medicamentos', value: medicationsData.length, icon: Pill, color: 'text-accent-blue' },
+              { label: 'Laboratorios', value: laboratoriosData.length, icon: FlaskConical, color: 'text-alert-amber' },
+              { label: 'Alergias', value: 0, icon: AlertTriangle, color: 'text-alert-red' },
             ].map(s => (
               <div key={s.label} className="glass-card p-3 text-center">
                 <s.icon className={`w-5 h-5 ${s.color} mx-auto mb-1`} />

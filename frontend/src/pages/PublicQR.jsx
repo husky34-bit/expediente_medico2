@@ -29,7 +29,7 @@ export default function PublicQR() {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await apiClient.get(`/api/public/${qrToken}`)
+        const res = await apiClient.get(`/api/publico/${qrToken}`)
         setData(res.data)
       } catch (err) {
         setError(err.response?.status === 404
@@ -42,9 +42,9 @@ export default function PublicQR() {
     fetch()
   }, [qrToken])
 
-  const initials = data?.full_name?.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+  const initials = data?.nombre_completo?.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
 
-  const hasAnaphylactic = data?.allergies?.some(a => a.severity === 'anaphylactic')
+  const hasAnaphylactic = data?.alergias?.toLowerCase().includes('anafilaxia')
 
   if (loading) return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center">
@@ -100,101 +100,111 @@ export default function PublicQR() {
               {initials}
             </div>
             <div>
-              <h1 className="font-display text-2xl text-text-primary">{data.full_name}</h1>
-              <div className="flex items-center gap-3 mt-1">
-                {data.blood_type && (
-                  <span className="badge-blood flex items-center gap-1">
-                    <Droplets className="w-3 h-3" /> {data.blood_type}
-                  </span>
-                )}
-                <span className="text-text-secondary text-sm capitalize">{data.gender === 'male' ? 'Masculino' : data.gender === 'female' ? 'Femenino' : 'Otro'}</span>
+              <h2 className="text-xl font-display text-text-primary leading-tight">{data.nombre_completo}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-text-muted font-mono">ID: {data.dni_pasaporte}</span>
+                <span className="w-1 h-1 rounded-full bg-text-muted/30" />
+                <span className="text-xs text-text-muted">{data.fecha_nacimiento}</span>
               </div>
             </div>
           </div>
 
-          {data.emergency_contact_name && (
-            <div className="p-3 rounded-sm bg-accent-blue/5 border border-accent-blue/20">
-              <p className="text-xs text-accent-blue font-medium mb-1 flex items-center gap-1">
-                <Phone className="w-3 h-3" /> CONTACTO DE EMERGENCIA
-              </p>
-              <p className="text-text-primary font-semibold">{data.emergency_contact_name}</p>
-              {data.emergency_contact_phone && (
-                <a
-                  href={`tel:${data.emergency_contact_phone}`}
-                  className="text-accent-blue font-mono text-sm hover:underline"
-                >
-                  {data.emergency_contact_phone}
-                </a>
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className="p-3 rounded-xl bg-bg-secondary border border-bg-border">
+              <div className="flex items-center gap-2 text-text-muted mb-1">
+                <Droplets className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Sangre</span>
+              </div>
+              <p className="text-text-primary font-bold">{data.tipo_sangre || 'N/A'}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-bg-secondary border border-bg-border">
+              <div className="flex items-center gap-2 text-text-muted mb-1">
+                <User className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Género</span>
+              </div>
+              <p className="text-text-primary font-bold">{data.genero_biologico}</p>
+            </div>
+          </div>
+
+          {data.contacto_emergencia_tel && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-accent-teal/5 border border-accent-teal/20">
+              <div className="flex items-center gap-3">
+                <Phone className="w-5 h-5 text-accent-teal" />
+                <div>
+                  <p className="text-[10px] font-bold text-accent-teal uppercase tracking-wider">Emergencia</p>
+                  <p className="text-text-primary font-bold text-sm">{data.contacto_emergencia_nombre}</p>
+                </div>
+              </div>
+              <a href={`tel:${data.contacto_emergencia_tel}`} className="w-10 h-10 rounded-full bg-accent-teal flex items-center justify-center text-white shadow-teal">
+                <Phone className="w-5 h-5 fill-current" />
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Sections */}
+        <div className="space-y-4">
+          {/* Allergies */}
+          <div className="glass-card p-5 fade-up-3">
+            <div className="flex items-center gap-2 mb-3 text-alert-red">
+              <AlertTriangle className="w-4 h-4" />
+              <h3 className="font-bold text-sm uppercase tracking-wider">Alergias</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {data.alergias ? (
+                <span className="badge-red">{data.alergias}</span>
+              ) : (
+                <span className="text-text-muted text-sm italic">Sin alergias conocidas</span>
               )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Allergies */}
-        <div className="glass-card p-5 mb-4 fade-up-3">
-          <h2 className="text-text-secondary text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-alert-red" /> Alergias Conocidas
-          </h2>
-          {data.allergies.length === 0 ? (
-            <p className="text-text-muted text-sm">Sin alergias registradas</p>
-          ) : (
-            <div className="space-y-2">
-              {data.allergies.map((a, i) => (
-                <div key={i} className={`flex items-center justify-between p-2.5 rounded-sm border ${severityStyle[a.severity] || ''}`}>
-                  <div>
-                    <span className="font-semibold text-sm">{a.allergen}</span>
-                    {a.reaction_type && <p className="text-xs opacity-80 mt-0.5">{a.reaction_type}</p>}
-                  </div>
-                  <span className="text-xs ml-2 whitespace-nowrap">{severityLabel[a.severity]}</span>
-                </div>
-              ))}
+          {/* Medications */}
+          <div className="glass-card p-5 fade-up-3">
+            <div className="flex items-center gap-2 mb-3 text-accent-teal">
+              <Pill className="w-4 h-4" />
+              <h3 className="font-bold text-sm uppercase tracking-wider">Medicación Activa</h3>
             </div>
-          )}
-        </div>
-
-        {/* Active medications */}
-        <div className="glass-card p-5 mb-4 fade-up-4">
-          <h2 className="text-text-secondary text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Pill className="w-4 h-4 text-accent-blue" /> Medicación Activa
-          </h2>
-          {data.active_medications.length === 0 ? (
-            <p className="text-text-muted text-sm">Sin medicación activa</p>
-          ) : (
-            <div className="space-y-2">
-              {data.active_medications.map((m, i) => (
-                <div key={i} className="flex items-start gap-2 p-2.5 rounded-sm bg-bg-secondary border border-bg-border">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent-blue mt-1.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-text-primary text-sm font-medium">{m.name}</p>
-                    <p className="text-text-secondary text-xs">{m.dose} — {m.frequency}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent consultations */}
-        <div className="glass-card p-5 mb-6 fade-up-5">
-          <h2 className="text-text-secondary text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Stethoscope className="w-4 h-4 text-accent-teal" /> Últimas Consultas
-          </h2>
-          {data.recent_consultations.length === 0 ? (
-            <p className="text-text-muted text-sm">Sin consultas registradas</p>
-          ) : (
             <div className="space-y-3">
-              {data.recent_consultations.map((c, i) => (
-                <div key={i} className="border-l-2 border-accent-teal/30 pl-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-text-primary text-sm font-medium">{c.diagnosis}</p>
-                    <span className="text-text-muted text-xs font-mono whitespace-nowrap">{c.date}</span>
+              {data.medicamentos_activos.length > 0 ? (
+                data.medicamentos_activos.map((m, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-bg-secondary border border-bg-border">
+                    <div className="w-8 h-8 rounded-lg bg-accent-teal/10 flex items-center justify-center text-accent-teal flex-shrink-0">
+                      <Pill className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-text-primary font-semibold text-sm">{m.nombre}</p>
+                      <p className="text-text-secondary text-xs">{m.dosis} — {m.frecuencia}</p>
+                    </div>
                   </div>
-                  <p className="text-text-secondary text-xs mt-0.5">{c.chief_complaint}</p>
-                  {c.institution && <p className="text-text-muted text-xs">{c.institution}</p>}
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-text-muted text-sm italic">Sin medicación reportada</p>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Recent History */}
+          <div className="glass-card p-5 fade-up-3">
+            <div className="flex items-center gap-2 mb-3 text-accent-blue">
+              <Stethoscope className="w-4 h-4" />
+              <h3 className="font-bold text-sm uppercase tracking-wider">Consultas Recientes</h3>
+            </div>
+            <div className="space-y-4">
+              {data.consultas_recientes.length > 0 ? (
+                data.consultas_recientes.map((c, i) => (
+                  <div key={i} className="relative pl-4 border-l-2 border-accent-blue/20">
+                    <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-accent-blue" />
+                    <p className="text-[10px] font-bold text-text-muted uppercase mb-0.5">{c.fecha}</p>
+                    <p className="text-text-primary font-semibold text-sm">{c.diagnostico}</p>
+                    <p className="text-text-secondary text-xs">{c.motivo}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-text-muted text-sm italic">Sin historial reciente</p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Login CTA */}

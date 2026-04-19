@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:15
+    image: postgres:17
     env_file: 
       - .env
     environment:
@@ -8,9 +8,10 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-securepassword123}
       POSTGRES_DB: ${DB_NAME:-expediente_universal}
     ports:
-      - "5432:5432"
+      - "2433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./backend/database.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-expediente_universal}"]
       interval: 10s
@@ -38,8 +39,6 @@ services:
     env_file: 
       - .env
     command: npm run dev -- --host 0.0.0.0 --port 3000
-    environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     ports:
       - "3000:3000"
     depends_on:
