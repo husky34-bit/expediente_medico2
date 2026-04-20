@@ -235,17 +235,8 @@ def step3_wait_db():
 
 
 def step4_migrate():
-    step(4, TOTAL_STEPS, "Aplicar migraciones de base de datos (Alembic)")
-    rc, _ = run(
-        ["docker", "compose", "exec", "-T", "backend",
-         "alembic", "upgrade", "head"],
-    )
-    if rc != 0:
-        err("Error al aplicar migraciones.")
-        warn("Puedes intentarlo manualmente con:")
-        print(f"  {C}docker compose exec backend alembic upgrade head{RESET}")
-        sys.exit(1)
-    ok("Migraciones aplicadas correctamente")
+    step(4, TOTAL_STEPS, "Aplicar esquema de base de datos")
+    ok("El esquema se aplica de forma automática vía init.sql en el contenedor.")
 
 
 def step5_seed():
