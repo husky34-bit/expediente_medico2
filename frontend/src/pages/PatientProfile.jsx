@@ -1,335 +1,201 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, Stethoscope, Pill, FlaskConical, AlertTriangle,
-  Phone, MapPin, Droplets, Calendar, User, QrCode,
-  Plus, Loader2, Activity, ClipboardList
+  ArrowLeft, Heart, Thermometer, Droplets, FileText,
+  Plus, Loader2, Link2
 } from 'lucide-react'
 import apiClient from '../api/client'
-import { format, parseISO, differenceInYears } from 'date-fns'
-import { es } from 'date-fns/locale'
-import TimelineEntry from '../components/TimelineEntry'
-import AlertBadge from '../components/AlertBadge'
-import QRDisplay from '../components/QRDisplay'
+import { differenceInYears, parseISO, format } from 'date-fns'
+import { getPatientVitals, getPatientDisease, getInitials, getBloodTypeLabel } from '../utils/mockData'
+import { getPatientStatus } from '../utils/mockData'
 
 export default function PatientProfile() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('timeline')
 
-  const fetchData = async () => {
-    try {
-      const res = await apiClient.get(`/api/pacientes/${id}`)
-      setData(res.data)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { fetchData() }, [id])
-
-  const handleRegenerateQR = async () => {
-    try {
-      await apiClient.post(`/api/pacientes/${id}/qr-token`)
-      fetchData()
-    } catch (err) {
-      console.error(err)
-    }
-  }
+  useEffect(() => {
+    apiClient.get(`/api/pacientes/${id}`)
+      .then(r => setData(r.data))
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [id])
 
   if (loading) return (
     <div className="flex items-center justify-center py-24">
-      <Loader2 className="w-8 h-8 text-accent-teal animate-spin" />
+      <Loader2 className="w-8 h-8 text-primary animate-spin" />
     </div>
   )
 
   if (!data) return (
     <div className="text-center py-24">
-      <p className="text-text-secondary">Paciente no encontrado</p>
+      <p className="text-muted-foreground">Paciente no encontrado</p>
     </div>
   )
 
-  const { patient, consultations, medications, laboratorios } = data
-  const patientData = patient || data.paciente || {}
-  const consultationsData = consultations || data.consultas || []
-  const medicationsData = medications || data.medicamentos || []
-  const laboratoriosData = laboratorios || data.laboratorios || []
+  const patient = data.patient || data.paciente || {}
+  const consultations = data.consultations || data.consultas || []
+  const medications = data.medications || data.medicamentos || []
+  const labs = data.laboratorios || []
 
-  const age = patientData?.fecha_nacimiento
-    ? differenceInYears(new Date(), parseISO(patientData.fecha_nacimiento))
+  const age = patient.fecha_nacimiento
+    ? differenceInYears(new Date(), parseISO(patient.fecha_nacimiento))
     : null
-  const activeMeds = (medicationsData || []).filter(m => m.esta_activo)
+  const vitals = getPatientVitals(patient.id)
+  const initials = getInitials(patient.nombre_completo)
+  const bt = getBloodTypeLabel(patient.tipo_sangre)
+  const disease = getPatientDisease(patient)
 
-  // Build unified timeline
-  const timeline = [
-    ...(consultationsData || []).map(c => ({ type: 'consultation', date: c.fecha_consulta, ...c })),
-    ...(medicationsData || []).map(m => ({ type: 'medication', date: m.fecha_inicio, ...m })),
-    ...(laboratoriosData || []).map(l => ({ type: 'lab', date: l.fecha_prueba, ...l })),
-  ].sort((a, b) => new Date(b.date) - new Date(a.date))
+  const testReports = labs.length > 0 ? labs : [
+    { id: 1, nombre_prueba: 'CT Scan - Full Body', fecha_prueba: new Date().toISOString() },
+    { id: 2, nombre_prueba: 'Creatine Kinase T', fecha_prueba: new Date().toISOString() },
+    { id: 3, nombre_prueba: 'Eye Fluorescein Test', fecha_prueba: new Date().toISOString() },
+  ]
 
-  const initials = patientData?.nombre_completo?.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() || '??'
+  const reportColors = ['hsl(210 80% 60%)', 'hsl(45 95% 60%)', 'hsl(0 75% 65%)']
 
-  const tabs = [
-    { id: 'timeline', label: 'Historial', icon: Activity },
-    { id: 'medications', label: `Medicación (${(medicationsData || []).length})`, icon: Pill },
-    { id: 'labs', label: `Laboratorios (${(laboratoriosData || []).length})`, icon: FlaskConical },
+  const infoItems = [
+    { label: 'Gender', value: patient.genero_biologico === 'Masculino' ? 'Male' : patient.genero_biologico === 'Femenino' ? 'Female' : patient.genero_biologico },
+    { label: 'Blood Type', value: bt ? patient.tipo_sangre : 'N/A' },
+    { label: 'Allergies', value: patient.alergias || 'None' },
+    { label: 'Diseases', value: disease },
+    { label: 'Height', value: '1.78 m' },
+    { label: 'Weight', value: '65 kg' },
+    { label: 'Patient ID', value: patient.dni_pasaporte },
+    { label: 'Last Visit', value: patient.creado_en ? format(parseISO(patient.creado_en), 'dd MMMM yyyy') : 'N/A' },
   ]
 
   return (
-    <div>
-      {/* Back */}
-      <button
-        onClick={() => navigate('/dashboard')}
-        className="flex items-center gap-2 text-text-secondary hover:text-accent-teal text-sm mb-5 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" /> Volver al dashboard
-      </button>
+    <div className="animate-fade-in">
+      <h1 className="text-3xl font-bold text-foreground mb-6">
+        Current Appointment
+      </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content - left 2 cols */}
-        <div className="lg:col-span-2 space-y-5">
-          {/* Patient header */}
-          <div className="glass-card p-6 fade-up-1">
-            <div className="flex items-start gap-5">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent-teal to-accent-blue flex items-center justify-center text-2xl font-bold text-bg-primary flex-shrink-0">
-                {initials}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="font-display text-2xl text-text-primary mb-1">{patientData.nombre_completo}</h1>
-                <div className="flex flex-wrap gap-3 mb-3">
-                  {patientData.tipo_sangre && (
-                    <span className="badge-blood flex items-center gap-1">
-                      <Droplets className="w-3 h-3" /> {patientData.tipo_sangre}
-                    </span>
-                  )}
-                  {age !== null && (
-                    <span className="text-text-secondary text-sm flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" /> {age} años
-                    </span>
-                  )}
-                  <span className="text-text-secondary text-sm flex items-center gap-1">
-                    <User className="w-3.5 h-3.5" /> {patientData.genero_biologico}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-4 text-sm text-text-secondary">
-                  {patientData.dni_pasaporte && (
-                    <span className="font-mono">CI: {patientData.dni_pasaporte}</span>
-                  )}
-                  {patientData.contacto_emergencia_tel && (
-                    <span className="flex items-center gap-1">
-                      <Phone className="w-3.5 h-3.5" /> {patientData.contacto_emergencia_tel}
-                    </span>
-                  )}
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+        {/* Left column */}
+        <div className="space-y-6">
+          {/* Patient avatar card */}
+          <div className="bg-gradient-hero rounded-[1.75rem] p-6 shadow-card text-white">
+            <div className="flex flex-col items-center text-center">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 bg-white/30 blur-xl rounded-full" />
+                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-white/30 to-white/10 flex items-center justify-center text-white text-3xl font-bold border-4 border-white/80 shadow-glow relative">
+                  {initials}
                 </div>
               </div>
-              <button
-                onClick={() => navigate(`/patients/${id}/consult`)}
-                className="btn-primary flex items-center gap-2 flex-shrink-0"
-              >
-                <Plus className="w-4 h-4" /> Nueva Consulta
+              <h2 className="text-xl font-bold">{patient.nombre_completo}</h2>
+              <p className="text-sm text-white/85 mb-4">Age: {age || '?'}</p>
+              <button onClick={() => navigate(`/patients/${id}/consult`)}
+                className="bg-med-accent hover:bg-med-accent/90 text-med-accent-foreground font-semibold px-8 py-2.5 rounded-full shadow-soft transition-smooth hover:scale-105"
+                style={{ background: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
+                Update
               </button>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="glass-card overflow-hidden fade-up-2">
-            <div className="flex border-b border-bg-border overflow-x-auto">
-              {tabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-all ${
-                    activeTab === tab.id
-                      ? 'text-accent-teal border-b-2 border-accent-teal bg-accent-teal/5'
-                      : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  {tab.label}
-                </button>
+          {/* Information */}
+          <div className="med-section-card">
+            <h3 className="text-base font-bold text-foreground mb-4">Information:</h3>
+            <dl className="space-y-3">
+              {infoItems.map((item) => (
+                <div key={item.label} className="grid grid-cols-[110px_1fr] text-sm">
+                  <dt className="text-muted-foreground font-medium">{item.label}:</dt>
+                  <dd className="text-foreground font-semibold">{item.value}</dd>
+                </div>
               ))}
-            </div>
-
-            <div className="p-5">
-              {activeTab === 'timeline' && (
-                <div>
-                  {timeline.length === 0 ? (
-                    <p className="text-text-muted text-sm text-center py-8">Sin registros en el historial</p>
-                  ) : (
-                    timeline.map((entry, i) => {
-                      if (entry.type === 'consultation') return (
-                        <TimelineEntry
-                          key={entry.id}
-                          type="consultation"
-                          date={entry.date}
-                          title={entry.diagnostico_cie10}
-                          subtitle={entry.motivo_consulta}
-                          details={entry.tratamiento}
-                        />
-                      )
-                      if (entry.type === 'medication') return (
-                        <TimelineEntry
-                          key={entry.id}
-                          type="medication"
-                          date={entry.date}
-                          title={entry.nombre_medicamento}
-                          subtitle={`${entry.dosis} — ${entry.frecuencia}`}
-                          details={entry.notas}
-                        />
-                      )
-                      if (entry.type === 'lab') return (
-                        <TimelineEntry
-                          key={entry.id}
-                          type="lab"
-                          date={entry.date}
-                          title={entry.nombre_prueba}
-                          subtitle={`${entry.valor_resultado} ${entry.unidad || ''}`}
-                          details={entry.notas}
-                        />
-                      )
-                      if (entry.type === 'allergy') return (
-                        <TimelineEntry
-                          key={entry.id}
-                          type="allergy"
-                          date={entry.date}
-                          title={entry.allergen}
-                          subtitle={`${entry.severity} — ${entry.reaction_type || ''}`}
-                          details={entry.notes}
-                        />
-                      )
-                      return null
-                    })
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'allergies' && (
-                <div className="space-y-3">
-                  {allergies.length === 0
-                    ? <p className="text-text-muted text-sm text-center py-8">Sin alergias registradas</p>
-                    : allergies.map(a => (
-                        <AlertBadge
-                          key={a.id}
-                          allergen={a.allergen}
-                          severity={a.severity}
-                          reactionType={a.reaction_type}
-                          showFull
-                        />
-                      ))
-                  }
-                </div>
-              )}
-
-              {activeTab === 'medications' && (
-                <div className="space-y-3">
-                  {(medicationsData || []).length === 0
-                    ? <p className="text-text-muted text-sm text-center py-8">Sin medicamentos registrados</p>
-                    : medicationsData.map(m => (
-                    <div key={m.id} className="p-4 rounded-xl border border-bg-border bg-bg-secondary flex items-start justify-between">
-                      <div className="flex gap-3">
-                        <div className={`p-2 rounded-lg ${m.esta_activo ? 'bg-accent-teal/10 text-accent-teal' : 'bg-text-muted/10 text-text-muted'}`}>
-                          <Pill className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-text-primary">{m.nombre_medicamento}</h4>
-                          <p className="text-sm text-text-secondary">{m.dosis} — {m.frecuencia}</p>
-                          <p className="text-xs text-text-muted mt-1">Inicio: {m.fecha_inicio ? format(parseISO(m.fecha_inicio), 'PP', { locale: es }) : 'N/A'}</p>
-                        </div>
-                      </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${m.esta_activo ? 'bg-accent-teal/10 text-accent-teal border border-accent-teal/20' : 'bg-text-muted/10 text-text-muted border border-text-muted/20'}`}>
-                        {m.esta_activo ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {activeTab === 'labs' && (
-                <div className="space-y-3">
-                  {(laboratoriosData || []).length === 0
-                    ? <p className="text-text-muted text-sm text-center py-8">Sin resultados de laboratorio</p>
-                    : laboratoriosData.map(l => (
-                    <div key={l.id} className="p-4 rounded-xl border border-bg-border bg-bg-secondary flex items-start justify-between">
-                      <div className="flex gap-3">
-                        <div className="p-2 rounded-lg bg-accent-blue/10 text-accent-blue">
-                          <FlaskConical className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-text-primary">{l.nombre_prueba}</h4>
-                          <p className="text-sm text-text-secondary">Resultado: <span className="font-bold text-accent-blue">{l.valor_resultado} {l.unidad}</span></p>
-                          <p className="text-xs text-text-muted mt-1">Fecha: {l.fecha_prueba ? format(parseISO(l.fecha_prueba), 'PP', { locale: es }) : 'N/A'}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            </dl>
           </div>
         </div>
 
-        {/* Right panel */}
-        <div className="space-y-5">
-          {/* QR */}
-          <div className="fade-up-2">
-            <QRDisplay
-              patientId={patientData.id}
-              qrToken={patientData.qr_token}
-              patientName={patientData.nombre_completo}
-              onRegenerate={handleRegenerateQR}
-            />
-          </div>
-
-          {/* Emergency contact */}
-          {patientData.contacto_emergencia_nombre && (
-            <div className="glass-card p-4 fade-up-3">
-              <h3 className="text-text-secondary text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5" /> Contacto de Emergencia
-              </h3>
-              <p className="text-text-primary font-semibold">{patientData.contacto_emergencia_nombre}</p>
-              {patientData.contacto_emergencia_tel && (
-                <p className="text-accent-teal font-mono text-sm mt-1">{patientData.contacto_emergencia_tel}</p>
-              )}
-            </div>
-          )}
-
-          {/* Active medications summary */}
-          <div className="glass-card p-4 fade-up-3">
-            <h3 className="text-text-secondary text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Pill className="w-3.5 h-3.5" /> Medicación Activa ({activeMeds.length})
-            </h3>
-            {activeMeds.length === 0
-              ? <p className="text-text-muted text-sm">Sin medicación activa</p>
-              : (activeMeds || []).slice(0, 5).map(m => (
-                  <div key={m.id} className="flex items-center gap-2 py-1.5 border-b border-bg-border last:border-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent-teal flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-text-primary text-sm truncate">{m.nombre_medicamento}</p>
-                      <p className="text-text-muted text-xs">{m.dosis}</p>
-                    </div>
-                  </div>
-                ))
-            }
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-3 fade-up-4">
+        {/* Right column */}
+        <div className="space-y-6">
+          {/* Vitals cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { label: 'Consultas', value: consultationsData.length, icon: Stethoscope, color: 'text-accent-teal' },
-              { label: 'Medicamentos', value: medicationsData.length, icon: Pill, color: 'text-accent-blue' },
-              { label: 'Laboratorios', value: laboratoriosData.length, icon: FlaskConical, color: 'text-alert-amber' },
-              { label: 'Alergias', value: 0, icon: AlertTriangle, color: 'text-alert-red' },
-            ].map(s => (
-              <div key={s.label} className="glass-card p-3 text-center">
-                <s.icon className={`w-5 h-5 ${s.color} mx-auto mb-1`} />
-                <p className={`font-mono text-xl font-bold ${s.color}`}>{s.value}</p>
-                <p className="text-text-muted text-xs">{s.label}</p>
+              { icon: Heart, label: 'Heart Rate', value: vitals.heartRate, unit: 'bpm', iconColor: 'hsl(0 75% 62%)', iconBg: 'hsl(0 75% 62% / 0.12)' },
+              { icon: Thermometer, label: 'Body Temperature', value: vitals.temperature, unit: '°C', iconColor: 'hsl(35 90% 55%)', iconBg: 'hsl(35 90% 55% / 0.12)' },
+              { icon: Droplets, label: 'Glucose', value: vitals.glucose, unit: 'mg/dl', iconColor: 'hsl(210 80% 60%)', iconBg: 'hsl(210 80% 60% / 0.12)' },
+            ].map(v => (
+              <div key={v.label} className="med-card p-5 flex items-center gap-4 hover:-translate-y-1 transition-smooth" style={{ borderRadius: '1.5rem' }}>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: v.iconBg }}>
+                  <v.icon className="w-6 h-6" style={{ color: v.iconColor }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">{v.label}</p>
+                  <p className="text-xl font-bold text-foreground">
+                    {v.value}
+                    <span className="text-xs text-muted-foreground font-medium ml-1">{v.unit}</span>
+                  </p>
+                </div>
               </div>
             ))}
+          </div>
+
+          {/* Test Reports */}
+          <div className="med-section-card">
+            <h3 className="text-base font-bold text-foreground mb-4">Test Reports</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {testReports.slice(0, 3).map((r, i) => {
+                const color = reportColors[i % reportColors.length]
+                return (
+                  <button key={r.id || i}
+                    className="flex items-center gap-3 p-3 rounded-2xl hover:bg-secondary transition-smooth text-left">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: `${color}20` }}>
+                      <FileText className="w-5 h-5" style={{ color }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{r.nombre_prueba}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {r.fecha_prueba ? format(parseISO(r.fecha_prueba), 'dd MMMM yyyy') : 'N/A'}
+                      </p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Prescriptions */}
+          <div className="med-section-card">
+            <h3 className="text-base font-bold text-foreground mb-4">Prescriptions</h3>
+
+            <button onClick={() => navigate(`/patients/${id}/consult`)}
+              className="w-full border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 rounded-2xl py-3.5 flex items-center justify-center gap-2 text-primary font-semibold transition-smooth mb-5">
+              <Plus className="w-4 h-4" />
+              Add a prescription
+            </button>
+
+            {medications.length > 0 ? (
+              <div>
+                <div className="grid grid-cols-[1fr_120px_100px] text-xs font-semibold text-muted-foreground uppercase tracking-wide pb-2 border-b border-med-border">
+                  <span>Prescriptions</span>
+                  <span>Date</span>
+                  <span>Duration</span>
+                </div>
+                <ul className="divide-y divide-med-border">
+                  {medications.map(m => (
+                    <li key={m.id} className="grid grid-cols-[1fr_120px_100px] items-center py-4 text-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                          style={{ background: 'hsl(var(--accent) / 0.2)' }}>
+                          <Link2 className="w-4 h-4" style={{ color: 'hsl(var(--accent-foreground))' }} />
+                        </div>
+                        <span className="font-semibold text-foreground">{m.nombre_medicamento}</span>
+                      </div>
+                      <span className="text-muted-foreground">
+                        {m.fecha_inicio ? format(parseISO(m.fecha_inicio), 'dd MMM yyyy') : 'N/A'}
+                      </span>
+                      <span className="text-foreground font-medium">{m.dosis}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">No prescriptions yet</p>
+            )}
           </div>
         </div>
       </div>
