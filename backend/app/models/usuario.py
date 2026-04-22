@@ -15,3 +15,4 @@ class Usuario(Base):
     intentos_fallidos = Column(Integer, server_default='0')
     estado = Column(String(20), server_default='Activo')
     creado_en = Column(DateTime(timezone=True), server_default=func.now())
+    nombre_completo = Column(String(255), nullable=True)

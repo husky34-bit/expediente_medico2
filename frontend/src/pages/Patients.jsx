@@ -6,6 +6,20 @@ import { differenceInYears, parseISO, format } from 'date-fns'
 import { getPatientStatus, getPatientDisease, getInitials, getBloodTypeLabel } from '../utils/mockData'
 import StatusBadge from '../components/StatusBadge'
 
+const MaleIcon = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={`shrink-0 ${className}`} aria-hidden="true">
+    <circle cx="12" cy="4" r="2.5" />
+    <path d="M14 7.5H10c-1.1 0-2 .9-2 2v6h2v6.5h4v-6.5h2v-6c0-1.1-.9-2-2-2z" />
+  </svg>
+)
+
+const FemaleIcon = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={`shrink-0 ${className}`} aria-hidden="true">
+    <circle cx="12" cy="4" r="2.5" />
+    <path d="M15.39 8.5l-1.39-2h-4L8.61 8.5 5 16h3.5v6.5h7V16H19l-3.61-7.5z" />
+  </svg>
+)
+
 export default function Patients() {
   const [patients, setPatients] = useState([])
   const [total, setTotal] = useState(0)
@@ -40,9 +54,9 @@ export default function Patients() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Patients</h1>
+          <h1 className="text-3xl font-bold text-foreground">Estudiantes</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {total} patient{total !== 1 && 's'} registered
+            {total} estudiante{total !== 1 && 's'} registrado{total !== 1 && 's'}
           </p>
         </div>
 
@@ -54,7 +68,7 @@ export default function Patients() {
               type="text"
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              placeholder="Search patient..."
+              placeholder="Buscar estudiante..."
               className="pl-9 pr-4 h-10 rounded-full bg-secondary text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-56"
             />
           </div>
@@ -62,29 +76,29 @@ export default function Patients() {
           <button onClick={() => navigate('/patients/new')}
             className="rounded-full h-10 gap-2 px-5 flex items-center bg-primary text-white hover:bg-primary/90 shadow-soft font-semibold text-sm transition-smooth">
             <UserPlus className="w-4 h-4" />
-            Add patient
+            Añadir estudiante
           </button>
 
           {/* View toggle */}
-          <div role="group" aria-label="View mode"
+          <div role="group" aria-label="Modo de vista"
             className="inline-flex items-center bg-secondary p-1 rounded-full shadow-soft">
             <button type="button" onClick={() => setViewMode('cards')}
-              aria-pressed={viewMode === 'cards'} aria-label="Grid view"
+              aria-pressed={viewMode === 'cards'} aria-label="Vista de tarjetas"
               className={`h-8 px-3 rounded-full flex items-center gap-2 text-xs font-semibold transition-smooth ${
                 viewMode === 'cards'
                   ? 'bg-card text-primary-deep shadow-soft'
                   : 'text-muted-foreground hover:text-foreground'
               }`}>
-              <LayoutGrid className="w-4 h-4" /> Cards
+              <LayoutGrid className="w-4 h-4" /> Tarjetas
             </button>
             <button type="button" onClick={() => setViewMode('list')}
-              aria-pressed={viewMode === 'list'} aria-label="List view"
+              aria-pressed={viewMode === 'list'} aria-label="Vista de lista"
               className={`h-8 px-3 rounded-full flex items-center gap-2 text-xs font-semibold transition-smooth ${
                 viewMode === 'list'
                   ? 'bg-card text-primary-deep shadow-soft'
                   : 'text-muted-foreground hover:text-foreground'
               }`}>
-              <List className="w-4 h-4" /> List
+              <List className="w-4 h-4" /> Lista
             </button>
           </div>
         </div>
@@ -97,10 +111,10 @@ export default function Patients() {
         </div>
       ) : patients.length === 0 ? (
         <div className="med-section-card text-center py-16">
-          <p className="text-sm text-muted-foreground mb-4">No patients found</p>
+          <p className="text-sm text-muted-foreground mb-4">No se encontraron estudiantes</p>
           <button onClick={() => navigate('/patients/new')}
             className="rounded-full h-10 gap-2 px-5 inline-flex items-center bg-primary text-white hover:bg-primary/90 shadow-soft font-semibold text-sm transition-smooth">
-            <Plus className="w-4 h-4" /> Register first patient
+            <Plus className="w-4 h-4" /> Registrar primer estudiante
           </button>
         </div>
       ) : viewMode === 'cards' ? (
@@ -127,9 +141,14 @@ export default function Patients() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-base font-bold text-foreground truncate">{p.nombre_completo}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {p.genero_biologico === 'Femenino' ? 'Female' : p.genero_biologico === 'Masculino' ? 'Male' : p.genero_biologico} · Age {age || '?'}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
+                      {p.genero_biologico === 'Masculino' ? (
+                        <MaleIcon className="text-blue-500 w-3.5 h-3.5" />
+                      ) : p.genero_biologico === 'Femenino' ? (
+                        <FemaleIcon className="text-pink-500 w-3.5 h-3.5" />
+                      ) : null}
+                      <span>{p.genero_biologico} · Edad {age || '?'}</span>
+                    </div>
                     <div className="mt-2">
                       <StatusBadge status={status} />
                     </div>
@@ -139,27 +158,27 @@ export default function Patients() {
                 {/* Details */}
                 <dl className="mt-5 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                   <div>
-                    <dt className="text-muted-foreground">Blood</dt>
+                    <dt className="text-muted-foreground">Tipo de Sangre</dt>
                     <dd className="font-semibold text-foreground">{bt ? `${bt.type} ${bt.sign}` : 'N/A'}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Disease</dt>
+                    <dt className="text-muted-foreground">Enfermedad Base</dt>
                     <dd className="font-semibold text-foreground truncate">{disease}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Patient ID</dt>
+                    <dt className="text-muted-foreground">N° Matrícula</dt>
                     <dd className="font-semibold text-foreground">{p.dni_pasaporte}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Last Visit</dt>
+                    <dt className="text-muted-foreground">Última Visita</dt>
                     <dd className="font-semibold text-foreground">
-                      {p.creado_en ? format(parseISO(p.creado_en), 'dd MMMM yyyy') : 'N/A'}
+                      {p.creado_en ? format(parseISO(p.creado_en), 'dd MMM yyyy') : 'N/A'}
                     </dd>
                   </div>
                 </dl>
 
                 <span className="mt-5 inline-flex items-center gap-1 text-xs font-semibold text-primary-deep group-hover:gap-2 transition-smooth">
-                  View profile <ChevronRight className="w-3.5 h-3.5" />
+                  Ver perfil <ChevronRight className="w-3.5 h-3.5" />
                 </span>
               </div>
             )
@@ -169,11 +188,11 @@ export default function Patients() {
         /* List view */
         <div className="med-card shadow-card overflow-hidden animate-fade-in">
           <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_40px] px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-med-border">
-            <span>Patient</span>
-            <span>Gender</span>
-            <span>Blood</span>
-            <span>Last Visit</span>
-            <span>Status</span>
+            <span>Estudiante</span>
+            <span>Género</span>
+            <span>T. Sangre</span>
+            <span>Última Visita</span>
+            <span>Estado</span>
             <span />
           </div>
           <ul className="divide-y divide-med-border">
@@ -195,11 +214,16 @@ export default function Patients() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground truncate">{p.nombre_completo}</p>
-                        <p className="text-xs text-muted-foreground">Age {age || '?'}</p>
+                        <p className="text-xs text-muted-foreground">Edad {age || '?'}</p>
                       </div>
                     </div>
-                    <span className="text-foreground">
-                      {p.genero_biologico === 'Femenino' ? 'Female' : p.genero_biologico === 'Masculino' ? 'Male' : p.genero_biologico}
+                    <span className="flex items-center gap-1.5 text-foreground">
+                      {p.genero_biologico === 'Masculino' ? (
+                        <MaleIcon className="text-blue-500 w-4 h-4" />
+                      ) : p.genero_biologico === 'Femenino' ? (
+                        <FemaleIcon className="text-pink-500 w-4 h-4" />
+                      ) : null}
+                      {p.genero_biologico}
                     </span>
                     <span className="text-foreground font-medium">
                       {bt ? `${bt.type} ${bt.sign}` : 'N/A'}

@@ -127,10 +127,10 @@
     width: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #f0f2f5;
+    background: hsl(var(--muted));
   }
   ::-webkit-scrollbar-thumb {
-    background: #c4cdd5;
+    background: hsl(var(--muted-foreground) / 0.4);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -141,7 +141,7 @@
 @layer components {
   /* ── Legacy component classes (Login, Landing, etc.) ── */
   .glass-card {
-    @apply bg-white border border-bg-border rounded-card shadow-card;
+    @apply bg-card border border-med-border rounded-card shadow-card;
   }
 
   .btn-primary {
@@ -174,27 +174,27 @@
 
   .badge-blood {
     @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold
-    bg-red-50 text-red-600 border border-red-200;
+    bg-destructive/10 text-destructive border border-destructive/25;
   }
 
   .badge-teal {
     @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
-    bg-emerald-50 text-accent-teal border border-emerald-200;
+    bg-success/10 text-success border border-success/25;
   }
 
   .badge-blue {
     @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
-    bg-blue-50 text-accent-blue border border-blue-200;
+    bg-primary/10 text-primary border border-primary/25;
   }
 
   .badge-red {
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium
-    bg-red-50 text-alert-red border border-red-200;
+    bg-destructive/10 text-destructive border border-destructive/25;
   }
 
   .badge-amber {
     @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium
-    bg-amber-50 text-alert-amber border border-amber-200;
+    bg-amber-500/10 text-amber-500 border border-amber-500/25;
   }
 
   .sidebar-item {

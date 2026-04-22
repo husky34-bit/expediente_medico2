@@ -28,6 +28,7 @@ class UsuarioBase(BaseModel):
     email: EmailStr
     role_id: int
     estado: str = "Activo"
+    nombre_completo: Optional[str] = None
 
 class UsuarioCreate(UsuarioBase):
     password: str

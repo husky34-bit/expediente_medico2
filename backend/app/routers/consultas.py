@@ -43,6 +43,14 @@ def create_consulta(
     return consulta
 
 
+@router.get("/all", response_model=List[ConsultaResponse])
+def get_all_consultas(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    consultas = db.query(Consulta).order_by(Consulta.fecha_consulta.desc()).all()
+    return consultas
+
 @router.get("/{paciente_id}", response_model=List[ConsultaResponse])
 def get_consultas(
     paciente_id: uuid.UUID,

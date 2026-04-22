@@ -20,6 +20,7 @@ CREATE TABLE usuarios (
     intentos_fallidos INT DEFAULT 0,
     estado VARCHAR(20) DEFAULT 'Activo' CHECK (estado IN ('Activo', 'Bloqueado', 'Inactivo')),
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    nombre_completo VARCHAR(255),
     CONSTRAINT fk_usuario_rol FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
 );
 

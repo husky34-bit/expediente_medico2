@@ -55,21 +55,26 @@ export default function PatientProfile() {
 
   const reportColors = ['hsl(210 80% 60%)', 'hsl(45 95% 60%)', 'hsl(0 75% 65%)']
 
+  const pesoKg = patient.peso || 65
+  const alturaM = patient.altura || 1.78
+  const imc = (pesoKg / (alturaM * alturaM)).toFixed(1)
+
   const infoItems = [
-    { label: 'Gender', value: patient.genero_biologico === 'Masculino' ? 'Male' : patient.genero_biologico === 'Femenino' ? 'Female' : patient.genero_biologico },
-    { label: 'Blood Type', value: bt ? patient.tipo_sangre : 'N/A' },
-    { label: 'Allergies', value: patient.alergias || 'None' },
-    { label: 'Diseases', value: disease },
-    { label: 'Height', value: '1.78 m' },
-    { label: 'Weight', value: '65 kg' },
-    { label: 'Patient ID', value: patient.dni_pasaporte },
-    { label: 'Last Visit', value: patient.creado_en ? format(parseISO(patient.creado_en), 'dd MMMM yyyy') : 'N/A' },
+    { label: 'Género', value: patient.genero_biologico },
+    { label: 'Tipo de Sangre', value: bt ? patient.tipo_sangre : 'N/A' },
+    { label: 'Alergias', value: patient.alergias || 'Ninguna' },
+    { label: 'Enfermedades', value: disease },
+    { label: 'Altura', value: `${alturaM} m` },
+    { label: 'Peso', value: `${pesoKg} kg` },
+    { label: 'IMC', value: imc },
+    { label: 'N° Matrícula', value: patient.dni_pasaporte },
+    { label: 'Última Visita', value: patient.creado_en ? format(parseISO(patient.creado_en), 'dd MMM yyyy') : 'N/A' },
   ]
 
   return (
     <div className="animate-fade-in">
       <h1 className="text-3xl font-bold text-foreground mb-6">
-        Current Appointment
+        Perfil del Estudiante
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
@@ -85,18 +90,18 @@ export default function PatientProfile() {
                 </div>
               </div>
               <h2 className="text-xl font-bold">{patient.nombre_completo}</h2>
-              <p className="text-sm text-white/85 mb-4">Age: {age || '?'}</p>
+              <p className="text-sm text-white/85 mb-4">Edad: {age || '?'}</p>
               <button onClick={() => navigate(`/patients/${id}/consult`)}
                 className="bg-med-accent hover:bg-med-accent/90 text-med-accent-foreground font-semibold px-8 py-2.5 rounded-full shadow-soft transition-smooth hover:scale-105"
                 style={{ background: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }}>
-                Update
+                Actualizar
               </button>
             </div>
           </div>
 
           {/* Information */}
           <div className="med-section-card">
-            <h3 className="text-base font-bold text-foreground mb-4">Information:</h3>
+            <h3 className="text-base font-bold text-foreground mb-4">Información:</h3>
             <dl className="space-y-3">
               {infoItems.map((item) => (
                 <div key={item.label} className="grid grid-cols-[110px_1fr] text-sm">
@@ -113,9 +118,9 @@ export default function PatientProfile() {
           {/* Vitals cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { icon: Heart, label: 'Heart Rate', value: vitals.heartRate, unit: 'bpm', iconColor: 'hsl(0 75% 62%)', iconBg: 'hsl(0 75% 62% / 0.12)' },
-              { icon: Thermometer, label: 'Body Temperature', value: vitals.temperature, unit: '°C', iconColor: 'hsl(35 90% 55%)', iconBg: 'hsl(35 90% 55% / 0.12)' },
-              { icon: Droplets, label: 'Glucose', value: vitals.glucose, unit: 'mg/dl', iconColor: 'hsl(210 80% 60%)', iconBg: 'hsl(210 80% 60% / 0.12)' },
+              { icon: Heart, label: 'Frecuencia Cardíaca', value: vitals.heartRate, unit: 'lpm', iconColor: 'hsl(0 75% 62%)', iconBg: 'hsl(0 75% 62% / 0.12)' },
+              { icon: Thermometer, label: 'Temp. Corporal', value: vitals.temperature, unit: '°C', iconColor: 'hsl(35 90% 55%)', iconBg: 'hsl(35 90% 55% / 0.12)' },
+              { icon: Droplets, label: 'Glucosa', value: vitals.glucose, unit: 'mg/dl', iconColor: 'hsl(210 80% 60%)', iconBg: 'hsl(210 80% 60% / 0.12)' },
             ].map(v => (
               <div key={v.label} className="med-card p-5 flex items-center gap-4 hover:-translate-y-1 transition-smooth" style={{ borderRadius: '1.5rem' }}>
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
@@ -135,7 +140,7 @@ export default function PatientProfile() {
 
           {/* Test Reports */}
           <div className="med-section-card">
-            <h3 className="text-base font-bold text-foreground mb-4">Test Reports</h3>
+            <h3 className="text-base font-bold text-foreground mb-4">Resultados de Laboratorio</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {testReports.slice(0, 3).map((r, i) => {
                 const color = reportColors[i % reportColors.length]
@@ -149,7 +154,7 @@ export default function PatientProfile() {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{r.nombre_prueba}</p>
                       <p className="text-xs text-muted-foreground">
-                        {r.fecha_prueba ? format(parseISO(r.fecha_prueba), 'dd MMMM yyyy') : 'N/A'}
+                        {r.fecha_prueba ? format(parseISO(r.fecha_prueba), 'dd MMM yyyy') : 'N/A'}
                       </p>
                     </div>
                   </button>
@@ -160,20 +165,20 @@ export default function PatientProfile() {
 
           {/* Prescriptions */}
           <div className="med-section-card">
-            <h3 className="text-base font-bold text-foreground mb-4">Prescriptions</h3>
+            <h3 className="text-base font-bold text-foreground mb-4">Recetas Médicas</h3>
 
             <button onClick={() => navigate(`/patients/${id}/consult`)}
               className="w-full border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 rounded-2xl py-3.5 flex items-center justify-center gap-2 text-primary font-semibold transition-smooth mb-5">
               <Plus className="w-4 h-4" />
-              Add a prescription
+              Añadir receta médica
             </button>
 
             {medications.length > 0 ? (
               <div>
                 <div className="grid grid-cols-[1fr_120px_100px] text-xs font-semibold text-muted-foreground uppercase tracking-wide pb-2 border-b border-med-border">
-                  <span>Prescriptions</span>
-                  <span>Date</span>
-                  <span>Duration</span>
+                  <span>Recetas</span>
+                  <span>Fecha</span>
+                  <span>Dosis</span>
                 </div>
                 <ul className="divide-y divide-med-border">
                   {medications.map(m => (
@@ -194,7 +199,7 @@ export default function PatientProfile() {
                 </ul>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">No prescriptions yet</p>
+              <p className="text-sm text-muted-foreground text-center py-4">Aún no hay recetas médicas</p>
             )}
           </div>
         </div>

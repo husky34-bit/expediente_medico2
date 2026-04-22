@@ -9,6 +9,7 @@ import NewPatient from './pages/NewPatient'
 import Reports from './pages/Reports'
 import Records from './pages/Records'
 import Schedule from './pages/Schedule'
+import Consultas from './pages/Consultas'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/patients/new" element={<NewPatient />} />
           <Route path="/patients/:id" element={<PatientProfile />} />
           <Route path="/patients/:id/consult" element={<NewConsult />} />
+          <Route path="/consultas" element={<Consultas />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/records" element={<Records />} />
           <Route path="/schedule" element={<Schedule />} />
