@@ -51,9 +51,9 @@ export default function Dashboard() {
       {/* Header */}
       <div className="mb-6 flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">Inicio</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Overview of your clinic's activity and patient health
+            Resumen de la actividad de tu clínica y salud de pacientes
           </p>
         </div>
         <p className="text-xs text-muted-foreground">{todayStr}</p>
@@ -62,10 +62,10 @@ export default function Dashboard() {
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5 animate-fade-in">
         {[
-          { label: 'Total patients', value: total, icon: Users, tone: 'bg-primary/15 text-primary-deep' },
-          { label: 'Critical cases', value: criticalCount, icon: AlertTriangle, tone: 'bg-destructive/15 text-destructive' },
-          { label: 'Avg. heart rate', value: `${avgHR} bpm`, icon: HeartPulse, tone: 'bg-amber-400/20 text-amber-700' },
-          { label: 'Avg. glucose', value: `${avgGlucose} mg/dl`, icon: Activity, tone: 'bg-secondary text-primary-deep' },
+          { label: 'Pacientes totales', value: total, icon: Users, tone: 'bg-primary/15 text-primary-deep' },
+          { label: 'Casos críticos', value: criticalCount, icon: AlertTriangle, tone: 'bg-destructive/15 text-destructive' },
+          { label: 'Ritmo cardíaco prom.', value: `${avgHR} bpm`, icon: HeartPulse, tone: 'bg-amber-400/20 text-amber-700' },
+          { label: 'Glucosa prom.', value: `${avgGlucose} mg/dl`, icon: Activity, tone: 'bg-secondary text-primary-deep' },
         ].map((s) => (
           <div key={s.label} className="med-stat-card">
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${s.tone}`}>
@@ -87,12 +87,12 @@ export default function Dashboard() {
           <div className="med-section-card">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-bold text-foreground">Patient health overview</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Distribution by current status</p>
+                <h3 className="text-sm font-bold text-foreground">Resumen de salud de pacientes</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Distribución por estado actual</p>
               </div>
               <button onClick={() => navigate('/reports')}
                 className="text-xs font-semibold text-primary-deep hover:underline flex items-center gap-1">
-                See reports <ArrowUpRight className="w-3.5 h-3.5" />
+                Ver reportes <ArrowUpRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
@@ -124,7 +124,7 @@ export default function Dashboard() {
                 </div>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">No patients registered yet.</p>
+              <p className="text-sm text-muted-foreground">No hay pacientes registrados aún.</p>
             )}
           </div>
 
@@ -132,17 +132,17 @@ export default function Dashboard() {
           <div className="med-section-card">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-bold text-foreground">Recent patients</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Latest entries in your patient list</p>
+                <h3 className="text-sm font-bold text-foreground">Pacientes recientes</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Últimas entradas en tu lista de pacientes</p>
               </div>
               <button onClick={() => navigate('/patients')}
                 className="text-xs font-semibold text-primary-deep hover:underline flex items-center gap-1">
-                View all <ArrowUpRight className="w-3.5 h-3.5" />
+                Ver todos <ArrowUpRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {patients.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No patients yet.</p>
+              <p className="text-sm text-muted-foreground">Aún no hay pacientes.</p>
             ) : (
               <ul className="divide-y divide-med-border">
                 {patients.slice(0, 5).map(p => {
@@ -163,7 +163,7 @@ export default function Dashboard() {
                             {p.nombre_completo}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {age !== null ? `${age} yrs` : ''} · {disease}
+                            {age !== null ? `${age} años` : ''} · {disease}
                           </p>
                         </div>
                         <StatusBadge status={status} />
@@ -184,8 +184,8 @@ export default function Dashboard() {
                   <AlertTriangle className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">Need attention</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Patients flagged as critical</p>
+                  <h3 className="text-sm font-bold text-foreground">Requieren atención</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Pacientes marcados como críticos</p>
                 </div>
               </div>
               <span className="text-xs font-semibold text-destructive bg-destructive/10 px-2.5 py-1 rounded-full">
@@ -196,8 +196,8 @@ export default function Dashboard() {
             {criticalPatients.length === 0 ? (
               <div className="py-6 text-center">
                 <TrendingUp className="w-8 h-8 mx-auto text-success mb-2" />
-                <p className="text-sm font-medium text-foreground">All clear</p>
-                <p className="text-xs text-muted-foreground mt-1">No critical patients right now.</p>
+                <p className="text-sm font-medium text-foreground">Todo en orden</p>
+                <p className="text-xs text-muted-foreground mt-1">No hay pacientes críticos en este momento.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -232,16 +232,16 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <CalendarCheck className="w-4 h-4 text-primary-deep" />
-                <h3 className="text-sm font-bold text-foreground">Upcoming</h3>
+                <h3 className="text-sm font-bold text-foreground">Próximos</h3>
               </div>
               <button onClick={() => navigate('/schedule')}
                 className="text-[11px] font-semibold text-primary-deep hover:underline">
-                Schedule
+                Agenda
               </button>
             </div>
 
             {schedule.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-4">No appointments planned.</p>
+              <p className="text-xs text-muted-foreground py-4">No hay citas planeadas.</p>
             ) : (
               <ul className="space-y-2">
                 {schedule.slice(0, 5).map((s, i) => {
@@ -261,7 +261,7 @@ export default function Dashboard() {
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-foreground truncate">{s.patient.nombre_completo}</p>
                           <p className="text-[11px] text-muted-foreground truncate">
-                            {i === 0 ? 'Today' : format(d, 'EEE, MMM d')} · {s.time}
+                            {i === 0 ? 'Hoy' : format(d, 'EEE, MMM d')} · {s.time}
                           </p>
                         </div>
                       </div>
@@ -274,13 +274,13 @@ export default function Dashboard() {
 
           {/* Quick stats */}
           <div className="rounded-[1.75rem] p-5 shadow-glow text-white"
-            style={{ background: 'linear-gradient(135deg, hsl(174 55% 55%), hsl(190 70% 70%))' }}>
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-85">Today</p>
+            style={{ background: 'var(--gradient-hero)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-85">Hoy</p>
             <p className="text-3xl font-bold mt-1 leading-none">{todayAppts.length}</p>
-            <p className="text-xs opacity-85 mt-1">appointments scheduled</p>
+            <p className="text-xs opacity-85 mt-1">citas programadas</p>
             <button onClick={() => navigate('/schedule')}
               className="mt-4 inline-flex items-center gap-1 text-xs font-semibold bg-white/20 hover:bg-white/30 transition-smooth px-3 py-1.5 rounded-full">
-              Open agenda <ArrowUpRight className="w-3.5 h-3.5" />
+              Abrir agenda <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

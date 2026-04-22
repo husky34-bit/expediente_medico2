@@ -138,7 +138,7 @@ export default function Schedule() {
                     ? 'text-white shadow-glow'
                     : 'hover:bg-secondary/60 text-foreground'
                 }`}
-                style={isSel ? { background: 'linear-gradient(135deg, hsl(174 55% 55%), hsl(190 70% 70%))' } : {}}
+                style={isSel ? { background: 'var(--gradient-hero)' } : {}}
               >
                 <span className={`text-[10px] font-semibold uppercase tracking-wide ${
                   isSel ? 'text-white/85' : 'text-muted-foreground'

@@ -1,4 +1,4 @@
-export default function BarChart({ data = [], barColor = '#1cbcb4', height = 160 }) {
+export default function BarChart({ data = [], barColor = 'hsl(210 70% 50%)', height = 160 }) {
   const maxVal = Math.max(...data.map(d => d.value), 1)
   const ySteps = Array.from({ length: 5 }, (_, i) => Math.round(maxVal * (1 - i / 4)))
 

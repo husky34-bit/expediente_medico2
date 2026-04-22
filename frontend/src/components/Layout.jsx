@@ -1,23 +1,39 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import {
   LayoutDashboard, Users, BarChart3, ClipboardList,
-  CalendarDays, LogOut, Bell, RefreshCw, ChevronDown, Heart
+  CalendarDays, LogOut, Bell, RefreshCw, ChevronDown, Heart, Moon, Sun
 } from 'lucide-react'
 import { getDoctorName, getInitials } from '../utils/mockData'
 
 const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/patients', icon: Users, label: 'Patients' },
-  { to: '/reports', icon: BarChart3, label: 'Reports' },
-  { to: '/records', icon: ClipboardList, label: 'Records' },
-  { to: '/schedule', icon: CalendarDays, label: 'Schedule' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
+  { to: '/patients', icon: Users, label: 'Pacientes' },
+  { to: '/reports', icon: BarChart3, label: 'Reportes' },
+  { to: '/records', icon: ClipboardList, label: 'Expedientes' },
+  { to: '/schedule', icon: CalendarDays, label: 'Agenda' },
 ]
 
 export default function Layout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem('darkMode') === 'true' || 
+           (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', isDark);
+  }, [isDark]);
 
   const handleLogout = () => {
     logout()
@@ -33,13 +49,13 @@ export default function Layout() {
   }
 
   return (
-    <div className="h-screen flex p-4 gap-0 overflow-hidden" style={{ background: 'hsl(174 40% 94%)' }}>
+    <div className="h-screen flex p-4 gap-0 overflow-hidden bg-background">
       {/* ── Sidebar ── */}
       <aside className="relative w-64 bg-gradient-sidebar flex flex-col py-8 shadow-card rounded-3xl shrink-0">
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 mb-12">
           <div className="w-12 h-12 rounded-2xl bg-white/95 flex items-center justify-center shadow-soft shrink-0">
-            <Heart className="w-6 h-6 text-primary-deep" fill="hsl(174 55% 55%)" />
+            <Heart className="w-6 h-6 text-primary-deep" fill="currentColor" />
           </div>
           <div>
             <p className="text-white font-semibold text-sm leading-tight">Expediente Clínico</p>
@@ -98,11 +114,11 @@ export default function Layout() {
         {/* Logout */}
         <button
           onClick={handleLogout}
-          aria-label="Log out"
+          aria-label="Cerrar sesión"
           className="mx-4 h-12 rounded-xl flex items-center gap-4 px-5 text-white/90 hover:bg-white/20 transition-smooth mt-4"
         >
           <LogOut className="w-5 h-5 shrink-0" />
-          <span className="text-sm font-medium">Log out</span>
+          <span className="text-sm font-medium">Cerrar sesión</span>
         </button>
       </aside>
 
@@ -112,21 +128,29 @@ export default function Layout() {
         <header className="flex items-center justify-end px-8 pt-8 pb-4 shrink-0">
           <div className="flex items-center gap-4">
             <button
-              aria-label="Refresh"
-              className="w-10 h-10 rounded-full bg-white/70 hover:bg-white flex items-center justify-center text-primary-deep transition-smooth shadow-soft"
+              onClick={() => setIsDark(!isDark)}
+              aria-label="Alternar modo oscuro"
+              className="w-10 h-10 rounded-full bg-white/70 hover:bg-white flex items-center justify-center text-primary-deep transition-smooth shadow-soft dark:bg-card dark:hover:bg-card"
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            <button
+              aria-label="Actualizar"
+              className="w-10 h-10 rounded-full bg-white/70 hover:bg-white flex items-center justify-center text-primary-deep transition-smooth shadow-soft dark:bg-card dark:hover:bg-card"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
 
             <button
-              aria-label="Notifications"
-              className="w-10 h-10 rounded-full bg-white/70 hover:bg-white flex items-center justify-center text-primary-deep transition-smooth shadow-soft relative"
+              aria-label="Notificaciones"
+              className="w-10 h-10 rounded-full bg-white/70 hover:bg-white flex items-center justify-center text-primary-deep transition-smooth shadow-soft relative dark:bg-card dark:hover:bg-card"
             >
               <Bell className="w-4 h-4" />
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full" style={{ background: 'hsl(var(--accent))' }} />
             </button>
 
-            <div className="flex items-center gap-3 bg-white/70 rounded-full pl-2 pr-4 py-1.5 shadow-soft">
+            <div className="flex items-center gap-3 bg-white/70 rounded-full pl-2 pr-4 py-1.5 shadow-soft dark:bg-card">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center text-white font-bold text-xs">
                 {initials}
               </div>

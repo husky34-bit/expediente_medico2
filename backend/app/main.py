@@ -6,6 +6,7 @@ from app.routers.consultas import router as consultas_router
 from app.routers.medicamentos import router as medicamentos_router
 from app.routers.laboratorios import router as laboratorios_router
 from app.routers.publico import router as publico_router
+from app.routers.archivos import router as archivos_router
 
 app = FastAPI(
     title="Expediente Clínico Universal API",
@@ -27,6 +28,7 @@ app.include_router(consultas_router)
 app.include_router(medicamentos_router)
 app.include_router(laboratorios_router)
 app.include_router(publico_router)
+app.include_router(archivos_router)
 
 
 @app.get("/")

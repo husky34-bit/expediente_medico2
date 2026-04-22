@@ -40,7 +40,7 @@ export default function Reports() {
   const bloodDist = bloodTypes.map(bt => ({
     label: bt,
     value: patients.filter(p => p.tipo_sangre === bt).length,
-    color: 'hsl(174 55% 55%)',
+    color: 'hsl(210 70% 50%)',
   }))
 
   // Gender split
@@ -53,19 +53,19 @@ export default function Reports() {
   return (
     <div className="animate-fade-in">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Reports</h1>
+        <h1 className="text-3xl font-bold text-foreground">Reportes</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Aggregated insights across {total} registered patient{total !== 1 && 's'}
+          Información agregada de {total} paciente{total !== 1 ? 's' : ''} registrado{total !== 1 ? 's' : ''}
         </p>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { icon: Users, label: 'Total patients', value: total, tone: 'primary' },
-          { icon: ShieldAlert, label: 'Critical cases', value: criticalCount, tone: 'destructive' },
-          { icon: HeartPulse, label: 'Avg. heart rate', value: `${avgHR} bpm`, tone: 'accent' },
-          { icon: Droplet, label: 'Avg. glucose', value: avgGlucose, tone: 'success' },
+          { icon: Users, label: 'Pacientes totales', value: total, tone: 'primary' },
+          { icon: ShieldAlert, label: 'Casos críticos', value: criticalCount, tone: 'destructive' },
+          { icon: HeartPulse, label: 'Ritmo cardíaco prom.', value: `${avgHR} bpm`, tone: 'accent' },
+          { icon: Droplet, label: 'Glucosa prom.', value: avgGlucose, tone: 'success' },
         ].map(s => (
           <div key={s.label} className="bg-card rounded-2xl p-5 shadow-card flex items-center gap-4">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${toneMap[s.tone]}`}>
@@ -84,8 +84,8 @@ export default function Reports() {
         {/* Patient status donut */}
         <div className="med-section-card">
           <div className="mb-3">
-            <h3 className="text-sm font-bold text-foreground">Patient status</h3>
-            <p className="text-xs text-muted-foreground">Distribution by current condition</p>
+            <h3 className="text-sm font-bold text-foreground">Estado de pacientes</h3>
+            <p className="text-xs text-muted-foreground">Distribución por condición actual</p>
           </div>
           <div className="flex justify-center mb-4">
             <DonutChart
@@ -100,9 +100,9 @@ export default function Reports() {
           </div>
           <div className="flex flex-wrap gap-3">
             {[
-              { name: 'Stable', value: stableCount, color: 'hsl(152 60% 52%)' },
-              { name: 'Recovering', value: recoveringCount, color: 'hsl(45 95% 65%)' },
-              { name: 'Critical', value: criticalCount, color: 'hsl(0 75% 62%)' },
+              { name: 'Estable', value: stableCount, color: 'hsl(152 60% 52%)' },
+              { name: 'En recuperación', value: recoveringCount, color: 'hsl(45 95% 65%)' },
+              { name: 'Crítico', value: criticalCount, color: 'hsl(0 75% 62%)' },
             ].map(i => (
               <div key={i.name} className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: i.color }} />
@@ -116,32 +116,32 @@ export default function Reports() {
         {/* Blood type distribution */}
         <div className="med-section-card">
           <div className="mb-3">
-            <h3 className="text-sm font-bold text-foreground">Blood type distribution</h3>
-            <p className="text-xs text-muted-foreground">Across all patients</p>
+            <h3 className="text-sm font-bold text-foreground">Distribución de tipo de sangre</h3>
+            <p className="text-xs text-muted-foreground">En todos los pacientes</p>
           </div>
-          <BarChart data={bloodDist} barColor="hsl(174 55% 55%)" height={180} />
+          <BarChart data={bloodDist} barColor="hsl(210 70% 50%)" height={180} />
         </div>
 
         {/* Gender split donut */}
         <div className="med-section-card">
           <div className="mb-3">
-            <h3 className="text-sm font-bold text-foreground">Gender split</h3>
-            <p className="text-xs text-muted-foreground">Demographics</p>
+            <h3 className="text-sm font-bold text-foreground">Distribución por género</h3>
+            <p className="text-xs text-muted-foreground">Demografía</p>
           </div>
           <div className="flex justify-center mb-4">
             <DonutChart
               size={180}
               strokeWidth={36}
               data={[
-                { value: maleCount, color: 'hsl(174 55% 55%)' },
+                { value: maleCount, color: 'hsl(210 70% 50%)' },
                 { value: femaleCount, color: 'hsl(45 95% 65%)' },
               ]}
             />
           </div>
           <div className="flex flex-wrap gap-3">
             {[
-              { name: 'Male', value: maleCount, color: 'hsl(174 55% 55%)' },
-              { name: 'Female', value: femaleCount, color: 'hsl(45 95% 65%)' },
+              { name: 'Masculino', value: maleCount, color: 'hsl(210 70% 50%)' },
+              { name: 'Femenino', value: femaleCount, color: 'hsl(45 95% 65%)' },
             ].map(i => (
               <div key={i.name} className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: i.color }} />
@@ -160,16 +160,16 @@ export default function Reports() {
             <AlertTriangle className="w-5 h-5 text-destructive" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">Patients requiring attention</h2>
+            <h2 className="text-base font-bold text-foreground">Pacientes que requieren atención</h2>
             <p className="text-xs text-muted-foreground">
-              {criticalCount} critical case{criticalCount !== 1 ? 's' : ''}
+              {criticalCount} caso{criticalCount !== 1 ? 's' : ''} crítico{criticalCount !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
 
         {criticalPatients.length === 0 ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
-            No critical patients at the moment.
+            No hay pacientes críticos en este momento.
           </div>
         ) : (
           <ul className="divide-y divide-med-border">
@@ -185,7 +185,7 @@ export default function Reports() {
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-foreground truncate">{p.nombre_completo}</p>
-                      <p className="text-xs text-muted-foreground">Age {age || '?'}</p>
+                      <p className="text-xs text-muted-foreground">Edad {age || '?'}</p>
                     </div>
                   </div>
                   <span className="text-foreground">{getPatientDisease(p)}</span>
