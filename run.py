@@ -16,6 +16,8 @@ import subprocess
 import os
 import time
 import shutil
+import json
+import socket
 
 # ─── Colores ANSI ──────────────────────────────────────────────────────────────
 R  = "\033[91m"   # rojo
@@ -88,6 +90,48 @@ def docker_available() -> bool:
         return rc == 0
     except Exception:
         return False
+
+
+def ensure_docker_dns():
+    """
+    Garantiza que el daemon de Docker use DNS públicos confiables (Google + Cloudflare).
+    Esto evita el error 'no such host' / EOF al intentar hacer pull de imágenes de Docker Hub.
+    Se configura una sola vez escribiendo ~/.docker/daemon.json.
+    """
+    DNS_SERVERS = ["8.8.8.8", "8.8.4.4", "1.1.1.1"]
+
+    # Buscar daemon.json en la ruta estándar de Docker
+    docker_dir = os.path.join(os.path.expanduser("~"), ".docker")
+    daemon_path = os.path.join(docker_dir, "daemon.json")
+
+    # Leer configuración existente (si hay)
+    config = {}
+    if os.path.isfile(daemon_path):
+        try:
+            with open(daemon_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            config = {}
+
+    # Verificar si ya tiene los DNS correctos configurados
+    current_dns = config.get("dns", [])
+    if set(DNS_SERVERS).issubset(set(current_dns)):
+        return  # Ya está configurado, no hacer nada
+
+    # Agregar / actualizar DNS
+    config["dns"] = DNS_SERVERS
+
+    try:
+        os.makedirs(docker_dir, exist_ok=True)
+        with open(daemon_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2)
+        ok(f"DNS de Docker configurado ({', '.join(DNS_SERVERS)}) en {daemon_path}")
+        info("Nota: este cambio aplica al próximo reinicio de Docker Desktop.")
+    except OSError as e:
+        warn(f"No se pudo escribir daemon.json: {e}")
+        warn("Si tienes errores de red al bajar imágenes, configura manualmente:")
+        warn(f"  Archivo: {daemon_path}")
+        warn(f'  Agrega:  "dns": {json.dumps(DNS_SERVERS)}')
 
 
 def wait_for_docker(max_wait: int = 90) -> bool:
@@ -175,6 +219,10 @@ TOTAL_STEPS = 5
 
 def step1_docker():
     step(1, TOTAL_STEPS, "Verificar Docker")
+
+    # ── Configurar DNS antes de iniciar Docker (previene EOF / no such host) ──
+    ensure_docker_dns()
+
     if docker_available():
         ok("Docker Desktop ya está corriendo")
         return
@@ -200,6 +248,16 @@ def step1_docker():
     ok("Docker Desktop está listo")
 
 
+def _check_dockerhub_reachable() -> bool:
+    """Comprueba si registry-1.docker.io es alcanzable por red."""
+    try:
+        socket.setdefaulttimeout(5)
+        socket.getaddrinfo("registry-1.docker.io", 443)
+        return True
+    except OSError:
+        return False
+
+
 def step2_build():
     step(2, TOTAL_STEPS, "Construir y levantar contenedores (docker compose up --build)")
     env_path = os.path.join(HERE, ".env")
@@ -215,9 +273,30 @@ def step2_build():
         ok("Los contenedores ya están corriendo — saltando build")
         return
 
+    # ── Verificar conectividad con Docker Hub antes de intentar el build ──
+    if not _check_dockerhub_reachable():
+        warn("No se puede alcanzar registry-1.docker.io.")
+        warn("Posibles causas: sin internet, DNS bloqueado, firewall o VPN activa.")
+        info("Sugerencias:")
+        info("  1. Verifica tu conexión a internet.")
+        info("  2. Reinicia Docker Desktop para que tome el DNS configurado.")
+        info("  3. Desactiva VPN o proxy temporalmente.")
+        info("  4. Ejecuta manualmente: docker pull node:20-alpine")
+        print()
+        continuar = input(f"  {Y}¿Intentar el build de todas formas? (s/N): {RESET}").strip().lower()
+        if continuar != "s":
+            err("Build cancelado por el usuario.")
+            sys.exit(1)
+
     rc = run_stream(["docker", "compose", "up", "--build", "-d"])
     if rc != 0:
         err("Error al levantar los contenedores. Revisa el log anterior.")
+        print(f"""
+  {Y}Errores comunes:{RESET}
+  {DIM}• EOF / no such host{RESET}  →  Problema de DNS. Reinicia Docker Desktop y reintenta.
+  {DIM}• port is already allocated{RESET}  →  Cierra otras apps que usen los puertos 3000/8000/2433.
+  {DIM}• permission denied{RESET}  →  Ejecuta el script como administrador.
+""")
         sys.exit(1)
     ok("Contenedores levantados en modo detached")
 
