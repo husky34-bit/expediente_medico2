@@ -15,5 +15,23 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    // Permitir que el SW se sirva correctamente en dev
+    headers: {
+      'Service-Worker-Allowed': '/',
+    },
+  },
+  // Asegurar que los assets del public/ se copien correctamente
+  publicDir: 'public',
+  build: {
+    // Generar sourcemaps para facilitar debug
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          charts: ['date-fns'],
+        },
+      },
+    },
   },
 })

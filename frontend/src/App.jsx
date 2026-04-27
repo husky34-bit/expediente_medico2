@@ -10,6 +10,7 @@ import Reports from './pages/Reports'
 import Records from './pages/Records'
 import Schedule from './pages/Schedule'
 import Consultas from './pages/Consultas'
+import Settings from './pages/Settings'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/records" element={<Records />} />
           <Route path="/schedule" element={<Schedule />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
 

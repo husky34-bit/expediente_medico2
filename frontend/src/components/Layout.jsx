@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import {
   LayoutDashboard, Users, BarChart3, ClipboardList,
   CalendarDays, LogOut, Bell, RefreshCw, ChevronDown, Heart,
-  Moon, Sun, CheckCheck, Info, AlertCircle, Calendar, X, Loader2, CheckCircle2, Activity
+  Moon, Sun, CheckCheck, Info, AlertCircle, Calendar, X, Loader2, CheckCircle2, Activity,
+  Settings
 } from 'lucide-react'
 import { getDoctorName, getInitials } from '../utils/mockData'
 import apiClient from '../api/client'
@@ -16,6 +17,7 @@ const navItems = [
   { to: '/reports',   icon: BarChart3,        label: 'Reportes' },
   { to: '/records',   icon: ClipboardList,    label: 'Expedientes' },
   { to: '/schedule',  icon: CalendarDays,     label: 'Agenda' },
+  { to: '/settings',  icon: Settings,         label: 'Configuraciones' },
 ]
 
 const INITIAL_NOTIFICATIONS = [
@@ -195,7 +197,7 @@ export default function Layout() {
 
         {/* Logout */}
         <button onClick={() => { logout(); navigate('/login') }} aria-label="Cerrar sesión"
-          className="mx-4 h-12 rounded-xl flex items-center gap-4 px-5 text-white/90 hover:bg-white/20 transition-smooth mt-4">
+          className="mx-4 h-12 rounded-xl flex items-center gap-4 px-5 text-white/90 hover:bg-white/20 transition-smooth mt-1">
           <LogOut className="w-5 h-5 shrink-0" />
           <span className="text-sm font-medium">Cerrar sesión</span>
         </button>

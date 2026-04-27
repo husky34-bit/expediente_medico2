@@ -8,12 +8,30 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    const token = localStorage.getItem('access_token')
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser))
+    const verifySession = async () => {
+      const storedUser = localStorage.getItem('user')
+      const token = localStorage.getItem('access_token')
+      
+      if (storedUser && token) {
+        try {
+          const res = await apiClient.get('/api/auth/me')
+          setUser(res.data)
+          localStorage.setItem('user', JSON.stringify(res.data))
+        } catch (err) {
+          console.error("Session verification failed", err)
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('user')
+          setUser(null)
+        }
+      } else {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('user')
+        setUser(null)
+      }
+      setLoading(false)
     }
-    setLoading(false)
+
+    verifySession()
   }, [])
 
   const login = async (email, password) => {
