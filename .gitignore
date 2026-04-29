@@ -47,3 +47,6 @@ Thumbs.db
 
 # Docker (optional but good practice)
 .dockerignore
+
+#opencode
+opencode.txt
